@@ -4,7 +4,7 @@
 
 **Blocked by:** 02 (pause and resume)
 
-**Status:** ready-for-agent
+**Status:** done
 
 - [ ] Sleep while a Pomodoro is Running makes it Paused, with the remaining time it had at that moment.
 - [ ] After waking, the Pomodoro is still Paused, ready to resume or void.

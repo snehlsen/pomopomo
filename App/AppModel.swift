@@ -26,6 +26,7 @@ final class AppModel {
         timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
             MainActor.assumeIsolated { self?.tick() }
         }
+        observeSleepAndWake()
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert]) { _, _ in }
         tick()
     }
@@ -70,6 +71,14 @@ final class AppModel {
         events.forEach(announce)
     }
 
+    /// The Mac is going to sleep: a Running Pomodoro is Paused.
+    func willSleep() {
+        now = Date()
+        let events = logbook.sleep(now: now)
+        save()
+        events.forEach(announce)
+    }
+
     /// Runs a command on the Logbook at the current time, then saves.
     func perform(_ command: (inout Logbook, Date) throws -> Void) {
         now = Date()
@@ -93,6 +102,17 @@ final class AppModel {
     }
 
     // MARK: Private
+
+    private func observeSleepAndWake() {
+        let center = NSWorkspace.shared.notificationCenter
+        center.addObserver(forName: NSWorkspace.willSleepNotification, object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.willSleep() }
+        }
+        // Waking may land on a new date; the next tick would notice too, but don't wait for it.
+        center.addObserver(forName: NSWorkspace.didWakeNotification, object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.tick() }
+        }
+    }
 
     private func save() {
         do {

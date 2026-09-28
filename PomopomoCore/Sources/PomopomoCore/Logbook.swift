@@ -156,6 +156,17 @@ public struct Logbook: Codable, Equatable, Sendable {
         }
     }
 
+    /// The Mac is going to sleep: a Running Pomodoro is Paused, keeping its remaining time.
+    /// Breaks follow the real clock and aren't affected. Returns what was settled on the way.
+    @discardableResult
+    public mutating func sleep(now: Date) -> [Event] {
+        let events = advance(to: now)
+        if case .running = activePomodoro(now: now)?.state {
+            try? pausePomodoro(now: now)
+        }
+        return events
+    }
+
     /// Abandons today's Running or Paused Pomodoro. It stays in the Day's history but counts toward nothing.
     public mutating func voidPomodoro(now: Date) throws {
         try updateActivePomodoro(now: now, orThrow: .noUnfinishedPomodoro) { pomodoro in
