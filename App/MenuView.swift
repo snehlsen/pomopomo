@@ -45,6 +45,19 @@ struct ActivePomodoroView: View {
             Text(model.remaining(of: pomodoro).countdown)
                 .font(.system(size: 36, weight: .semibold, design: .rounded))
                 .monospacedDigit()
+                .foregroundStyle(pomodoro.isPaused ? .secondary : .primary)
+            HStack {
+                if pomodoro.isPaused {
+                    Button("Resume") {
+                        model.perform { logbook, now in try logbook.resumePomodoro(now: now) }
+                    }
+                    .keyboardShortcut(.defaultAction)
+                } else {
+                    Button("Pause") {
+                        model.perform { logbook, now in try logbook.pausePomodoro(now: now) }
+                    }
+                }
+            }
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 6)
@@ -81,6 +94,7 @@ struct TaskRow: View {
                 Text("\(day.completedCount(of: task.id)) of \(task.estimate) Pomodoros")
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                PomodoroHistory(pomodoros: day.pomodoros(on: task.id))
             }
             Spacer()
             Button("Start") {

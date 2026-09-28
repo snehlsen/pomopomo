@@ -11,6 +11,7 @@ public struct Task: Identifiable, Hashable, Codable, Sendable {
 public struct Pomodoro: Identifiable, Hashable, Codable, Sendable {
     public enum State: Hashable, Codable, Sendable {
         case running(endsAt: Date)
+        case paused(remaining: TimeInterval)
         case completed(at: Date)
     }
 
@@ -19,6 +20,14 @@ public struct Pomodoro: Identifiable, Hashable, Codable, Sendable {
     /// The length it started with; it keeps this even if the setting changes.
     public let length: TimeInterval
     public var state: State
+    /// Rules of the method this Pomodoro bent, for information only.
+    public internal(set) var marks: Set<Mark> = []
+}
+
+/// A visible label on a Pomodoro recording that one of the method's rules was bent.
+public enum Mark: String, Hashable, Codable, Sendable, CaseIterable {
+    /// Paused at least once.
+    case pause
 }
 
 /// One calendar day, with its task list and the history of its Pomodoros.
@@ -49,5 +58,13 @@ public struct Day: Hashable, Codable, Sendable {
 extension Pomodoro {
     public var isCompleted: Bool {
         if case .completed = state { true } else { false }
+    }
+
+    /// Running or Paused: not yet Completed or Voided.
+    public var isUnfinished: Bool {
+        switch state {
+        case .running, .paused: true
+        case .completed: false
+        }
     }
 }

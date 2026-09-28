@@ -4,7 +4,7 @@
 
 **Blocked by:** 01 (walking skeleton)
 
-**Status:** ready-for-agent
+**Status:** done
 
 - [ ] A Running Pomodoro can be Paused. Its remaining time freezes, and the menu bar shows that it's Paused.
 - [ ] A Paused Pomodoro can be resumed, and it keeps the remaining time it had when it was Paused.

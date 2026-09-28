@@ -4,6 +4,8 @@ public enum PomopomoError: Error, Equatable {
     case invalidEstimate
     case noSuchTask
     case pomodoroAlreadyRunning
+    case noRunningPomodoro
+    case noPausedPomodoro
 }
 
 /// Something that happened as time passed, which the app should tell you about.
@@ -37,11 +39,9 @@ public struct Logbook: Codable, Equatable, Sendable {
         return days.first { $0.date == date } ?? Day(date: date)
     }
 
-    /// The Pomodoro that is Running at `now`, if any.
+    /// The Pomodoro that is Running or Paused at `now`, if any. A Day has at most one.
     public func activePomodoro(now: Date) -> Pomodoro? {
-        day(containing: now).pomodoros.first { pomodoro in
-            if case .running = pomodoro.state { true } else { false }
-        }
+        day(containing: now).pomodoros.first(where: \.isUnfinished)
     }
 
     // MARK: Commands
@@ -63,6 +63,23 @@ public struct Logbook: Codable, Equatable, Sendable {
         updateDay(containing: now) { $0.pomodoros.append(pomodoro) }
     }
 
+    public mutating func pausePomodoro(now: Date) throws {
+        advance(to: now)
+        try updateActivePomodoro(now: now, orThrow: .noRunningPomodoro) { pomodoro in
+            guard case .running(let endsAt) = pomodoro.state else { throw PomopomoError.noRunningPomodoro }
+            pomodoro.state = .paused(remaining: endsAt.timeIntervalSince(now))
+            pomodoro.marks.insert(.pause)
+        }
+    }
+
+    public mutating func resumePomodoro(now: Date) throws {
+        advance(to: now)
+        try updateActivePomodoro(now: now, orThrow: .noPausedPomodoro) { pomodoro in
+            guard case .paused(let remaining) = pomodoro.state else { throw PomopomoError.noPausedPomodoro }
+            pomodoro.state = .running(endsAt: now + remaining)
+        }
+    }
+
     /// Settles everything whose time is up by `now`.
     @discardableResult
     public mutating func advance(to now: Date) -> [Event] {
@@ -79,6 +96,19 @@ public struct Logbook: Codable, Equatable, Sendable {
     }
 
     // MARK: Helpers
+
+    /// Changes today's Running or Paused Pomodoro, or throws `missing` if there is none.
+    private mutating func updateActivePomodoro(
+        now: Date,
+        orThrow missing: PomopomoError,
+        _ change: (inout Pomodoro) throws -> Void
+    ) throws {
+        let date = DayDate(now, in: calendar)
+        guard let dayIndex = days.firstIndex(where: { $0.date == date }),
+              let index = days[dayIndex].pomodoros.firstIndex(where: \.isUnfinished)
+        else { throw missing }
+        try change(&days[dayIndex].pomodoros[index])
+    }
 
     private mutating func updateDay(containing now: Date, _ change: (inout Day) -> Void) {
         let date = DayDate(now, in: calendar)

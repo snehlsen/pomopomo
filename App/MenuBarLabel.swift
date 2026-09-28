@@ -7,7 +7,7 @@ struct MenuBarLabel: View {
 
     var body: some View {
         if let pomodoro = model.activePomodoro {
-            Image(systemName: "timer")
+            Image(systemName: pomodoro.isPaused ? "pause.circle" : "timer")
             Text(model.remaining(of: pomodoro).countdown).monospacedDigit()
         } else {
             Image(systemName: "timer")

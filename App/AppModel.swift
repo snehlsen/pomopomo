@@ -59,6 +59,7 @@ final class AppModel {
     func remaining(of pomodoro: Pomodoro) -> TimeInterval {
         switch pomodoro.state {
         case .running(let endsAt): max(0, endsAt.timeIntervalSince(now))
+        case .paused(let remaining): remaining
         case .completed: 0
         }
     }
@@ -104,6 +105,8 @@ extension PomopomoError {
         case .invalidEstimate: "An Estimate must be at least 1 Pomodoro."
         case .noSuchTask: "That Task isn't on today's list."
         case .pomodoroAlreadyRunning: "A Pomodoro is already Running."
+        case .noRunningPomodoro: "No Pomodoro is Running."
+        case .noPausedPomodoro: "No Pomodoro is Paused."
         }
     }
 }
