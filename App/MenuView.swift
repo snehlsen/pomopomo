@@ -81,6 +81,10 @@ struct BreakView: View {
                     .font(.system(size: 36, weight: .semibold, design: .rounded))
                     .monospacedDigit()
                     .foregroundStyle(.teal)
+                Button("End Break Early") {
+                    model.perform { logbook, now in try logbook.endBreak(now: now) }
+                }
+                .help("The next Pomodoro will carry a Skipped-Break Mark.")
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 6)

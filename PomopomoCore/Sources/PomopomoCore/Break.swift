@@ -17,4 +17,6 @@ enum BreakStatus: Hashable, Codable, Sendable {
     /// A Pomodoro on this Day was just Completed and its Break hasn't started.
     case due(on: DayDate)
     case running(Break)
+    /// The Break on this Day was ended before its time was up.
+    case endedEarly(on: DayDate)
 }

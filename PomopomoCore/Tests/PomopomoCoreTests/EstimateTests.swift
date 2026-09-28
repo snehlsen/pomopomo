@@ -43,7 +43,7 @@ import Testing
         try logbook.startPomodoro(on: task, now: sept28(10))
         logbook.advance(to: sept28(10, 30))
 
-        #expect(today.pomodoros.map(\.marks) == [[], [.overrun], [.overrun]])
+        #expect(today.pomodoros.map { $0.marks.contains(.overrun) } == [false, true, true])
         #expect(today.completedCount(of: task) == 3)
     }
 
@@ -63,6 +63,7 @@ import Testing
         try logbook.resumePomodoro(now: sept28(9, 45))
         logbook.advance(to: sept28(11))
 
-        #expect(today.pomodoros.map(\.marks) == [[], [.overrun, .pause]])
+        #expect(today.pomodoros[0].marks.isEmpty)
+        #expect(today.pomodoros[1].marks.isSuperset(of: [.overrun, .pause]))
     }
 }

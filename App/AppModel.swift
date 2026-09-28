@@ -123,6 +123,7 @@ extension PomopomoError {
         case .taskIsDone: "That Task is Done. Add a new Task for extra work."
         case .taskHasPomodoros: "A Task can't be deleted once a Pomodoro on it has started."
         case .noBreakDue: "No Break is due."
+        case .noRunningBreak: "No Break is running."
         }
     }
 }

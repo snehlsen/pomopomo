@@ -11,6 +11,7 @@ public enum PomopomoError: Error, Equatable {
     case taskIsDone
     case taskHasPomodoros
     case noBreakDue
+    case noRunningBreak
 }
 
 /// Something that happened as time passed, which the app should tell you about.
@@ -110,6 +111,9 @@ public struct Logbook: Codable, Equatable, Sendable {
         if today.completedCount(of: taskID) >= task.estimate {
             pomodoro.marks.insert(.overrun)
         }
+        if isSkippingBreak(on: today.date) {
+            pomodoro.marks.insert(.skippedBreak)
+        }
         updateDay(containing: now) { $0.pomodoros.append(pomodoro) }
         breakStatus = nil
     }
@@ -147,6 +151,13 @@ public struct Logbook: Codable, Equatable, Sendable {
         breakStatus = .running(Break(kind: kind, length: length, endsAt: now + length))
     }
 
+    /// Ends the running Break before its time is up. The next Pomodoro gets a Skipped-Break Mark.
+    public mutating func endBreak(now: Date) throws {
+        advance(to: now)
+        guard runningBreak(now: now) != nil else { throw PomopomoError.noRunningBreak }
+        breakStatus = .endedEarly(on: day(containing: now).date)
+    }
+
     /// Settles everything whose time is up by `now`.
     @discardableResult
     public mutating func advance(to now: Date) -> [Event] {
@@ -168,6 +179,15 @@ public struct Logbook: Codable, Equatable, Sendable {
     }
 
     // MARK: Helpers
+
+    /// Whether starting a Pomodoro now skips a Break: one is due, running, or was ended early.
+    private func isSkippingBreak(on date: DayDate) -> Bool {
+        switch breakStatus {
+        case .due(let day), .endedEarly(let day): day == date
+        case .running: true
+        case nil: false
+        }
+    }
 
     /// Changes today's Running or Paused Pomodoro, or throws `missing` if there is none.
     private mutating func updateActivePomodoro(

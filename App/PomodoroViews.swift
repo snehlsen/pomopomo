@@ -74,6 +74,7 @@ struct MarkBadge: View {
         switch mark {
         case .pause: "pause.fill"
         case .overrun: "plus.square.fill"
+        case .skippedBreak: "cup.and.saucer.fill"
         }
     }
 
@@ -81,6 +82,7 @@ struct MarkBadge: View {
         switch mark {
         case .pause: .orange
         case .overrun: .red
+        case .skippedBreak: .purple
         }
     }
 }
@@ -90,6 +92,7 @@ extension Mark {
         switch self {
         case .pause: "Pause Mark"
         case .overrun: "Overrun Mark"
+        case .skippedBreak: "Skipped-Break Mark"
         }
     }
 }

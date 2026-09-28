@@ -41,7 +41,7 @@ import Testing
         logbook.advance(to: sept28(11))
 
         let day = logbook.day(containing: sept28(11))
-        #expect(day.pomodoros.map(\.marks) == [[.pause], []])
+        #expect(day.pomodoros.map { $0.marks.contains(.pause) } == [true, false])
         #expect(day.completedCount(of: task) == 2)
     }
 

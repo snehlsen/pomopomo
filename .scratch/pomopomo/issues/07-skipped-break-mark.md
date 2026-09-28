@@ -4,7 +4,7 @@
 
 **Blocked by:** 06 (breaks and sets)
 
-**Status:** ready-for-agent
+**Status:** done
 
 - [ ] Starting a Pomodoro while a Break is due, without starting that Break, gives it a Skipped-Break Mark.
 - [ ] Ending a Break early and then starting a Pomodoro gives it a Skipped-Break Mark.

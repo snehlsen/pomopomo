@@ -33,6 +33,8 @@ public enum Mark: String, Hashable, Codable, Sendable, CaseIterable {
     case pause
     /// Went beyond its Task's Estimate.
     case overrun
+    /// Started when a Break was due and that Break was skipped or ended before its time was up.
+    case skippedBreak
 }
 
 /// One calendar day, with its task list and the history of its Pomodoros.
