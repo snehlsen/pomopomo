@@ -9,4 +9,8 @@ public struct Settings: Hashable, Codable, Sendable {
     public var setSize = 4
 
     public init() {}
+
+    var isValid: Bool {
+        pomodoroLength > 0 && shortBreakLength > 0 && longBreakLength > 0 && setSize >= 1
+    }
 }

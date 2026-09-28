@@ -164,6 +164,7 @@ extension PomopomoError {
         case .taskHasPomodoros: "A Task can't be deleted once a Pomodoro on it has started."
         case .noBreakDue: "No Break is due."
         case .noRunningBreak: "No Break is running."
+        case .invalidSettings: "Lengths and the Set size must be at least 1."
         }
     }
 }

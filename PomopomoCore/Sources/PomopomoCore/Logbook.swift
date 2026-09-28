@@ -12,6 +12,7 @@ public enum PomopomoError: Error, Equatable {
     case taskHasPomodoros
     case noBreakDue
     case noRunningBreak
+    case invalidSettings
 }
 
 /// Something that happened as time passed, which the app should tell you about.
@@ -27,7 +28,7 @@ public enum Event: Equatable, Sendable {
 public struct Logbook: Codable, Equatable, Sendable {
     /// Every Day that has something on it, oldest first.
     public private(set) var days: [Day] = []
-    public var settings = Settings()
+    public private(set) var settings = Settings()
     private var breakStatus: BreakStatus?
 
     /// Used to work out which Day a moment belongs to. Not stored.
@@ -189,6 +190,15 @@ public struct Logbook: Codable, Equatable, Sendable {
         advance(to: now)
         guard runningBreak(now: now) != nil else { throw PomopomoError.noRunningBreak }
         breakStatus = .endedEarly(on: today(now: now).date)
+    }
+
+    // MARK: Settings
+
+    /// Changes the lengths and Set size. A Pomodoro or Break keeps the length it started with,
+    /// so new lengths apply from the next one; a new Set size applies to today's count straight away.
+    public mutating func changeSettings(_ newSettings: Settings) throws {
+        guard newSettings.isValid else { throw PomopomoError.invalidSettings }
+        settings = newSettings
     }
 
     // MARK: Time

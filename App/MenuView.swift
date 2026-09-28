@@ -4,6 +4,7 @@ import SwiftUI
 /// The window that opens from the menu bar.
 struct MenuView: View {
     let model: AppModel
+    @State private var showsSettings = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -22,7 +23,18 @@ struct MenuView: View {
                 Text(message).font(.caption).foregroundStyle(.red)
             }
             Divider()
+            if showsSettings {
+                SettingsView(model: model)
+                Divider()
+            }
             HStack {
+                Button {
+                    showsSettings.toggle()
+                } label: {
+                    Image(systemName: "gearshape")
+                }
+                .buttonStyle(.borderless)
+                .help("Settings")
                 Spacer()
                 Button("Quit Pomopomo") { NSApplication.shared.terminate(nil) }
                     .keyboardShortcut("q")

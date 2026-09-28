@@ -4,7 +4,7 @@
 
 **Blocked by:** 06 (breaks and sets)
 
-**Status:** ready-for-agent
+**Status:** done
 
 - [ ] The four settings can be changed, and they default to 25 / 5 / 15 / 4.
 - [ ] Settings survive relaunching the app.
