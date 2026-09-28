@@ -95,9 +95,11 @@ struct TaskRow: View {
         HStack(alignment: .firstTextBaseline) {
             VStack(alignment: .leading, spacing: 2) {
                 Text(task.name)
+                    .strikethrough(task.isDone)
+                    .foregroundStyle(task.isDone ? .secondary : .primary)
                 HStack(spacing: 4) {
                     Text("\(day.completedCount(of: task.id)) of \(task.estimate) Pomodoros")
-                    if !day.hasStartedPomodoro(on: task.id) {
+                    if !day.hasStartedPomodoro(on: task.id) && !task.isDone {
                         Stepper("Estimate", value: estimate, in: 1...20)
                             .labelsHidden()
                             .controlSize(.mini)
@@ -109,12 +111,39 @@ struct TaskRow: View {
                 PomodoroHistory(pomodoros: day.pomodoros(on: task.id))
             }
             Spacer()
-            Button("Start") {
-                model.perform { logbook, now in try logbook.startPomodoro(on: task.id, now: now) }
+            if task.isDone {
+                Label("Done", systemImage: "checkmark.seal.fill")
+                    .labelStyle(.titleAndIcon)
+                    .font(.caption)
+                    .foregroundStyle(.green)
+            } else {
+                Button("Start") {
+                    model.perform { logbook, now in try logbook.startPomodoro(on: task.id, now: now) }
+                }
+                .disabled(model.isPomodoroRunning)
+                .help(model.activePomodoro?.isPaused == true ? "Starting a new Pomodoro voids the Paused one." : "")
+                actions
             }
-            .disabled(model.isPomodoroRunning)
-            .help(model.activePomodoro?.isPaused == true ? "Starting a new Pomodoro voids the Paused one." : "")
         }
+    }
+
+    private var actions: some View {
+        Menu {
+            Button("Mark Done") {
+                model.perform { logbook, now in try logbook.markDone(task.id, now: now) }
+            }
+            if !day.hasStartedPomodoro(on: task.id) {
+                Button("Delete Task", role: .destructive) {
+                    model.perform { logbook, now in try logbook.deleteTask(task.id, now: now) }
+                }
+            }
+        } label: {
+            Image(systemName: "ellipsis.circle")
+        }
+        .menuStyle(.borderlessButton)
+        .menuIndicator(.hidden)
+        .fixedSize()
+        .help("Mark Done is final: no more Pomodoros can start on a Done Task.")
     }
 
     private var estimate: Binding<Int> {

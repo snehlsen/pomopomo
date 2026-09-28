@@ -4,7 +4,7 @@
 
 **Blocked by:** 01 (walking skeleton)
 
-**Status:** ready-for-agent
+**Status:** done
 
 - [ ] A Task can be marked Done at any time.
 - [ ] A Task never becomes Done on its own, including when it reaches its Estimate.

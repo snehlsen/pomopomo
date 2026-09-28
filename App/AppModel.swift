@@ -113,6 +113,8 @@ extension PomopomoError {
         case .noPausedPomodoro: "No Pomodoro is Paused."
         case .noUnfinishedPomodoro: "No Pomodoro is Running or Paused."
         case .estimateLocked: "The Estimate is locked once a Pomodoro on the Task has started."
+        case .taskIsDone: "That Task is Done. Add a new Task for extra work."
+        case .taskHasPomodoros: "A Task can't be deleted once a Pomodoro on it has started."
         }
     }
 }

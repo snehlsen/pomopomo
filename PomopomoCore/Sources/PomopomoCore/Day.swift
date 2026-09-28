@@ -3,8 +3,10 @@ import Foundation
 /// One item on a Day's task list, worked on in Pomodoros.
 public struct Task: Identifiable, Hashable, Codable, Sendable {
     public let id: UUID
-    public var name: String
-    public var estimate: Int
+    public let name: String
+    public internal(set) var estimate: Int
+    /// Marked finished by you. Final: no more Pomodoros can start on it.
+    public internal(set) var isDone = false
 }
 
 /// One block of focused work on a single Task.

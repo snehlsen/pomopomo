@@ -8,6 +8,8 @@ public enum PomopomoError: Error, Equatable {
     case noPausedPomodoro
     case noUnfinishedPomodoro
     case estimateLocked
+    case taskIsDone
+    case taskHasPomodoros
 }
 
 /// Something that happened as time passed, which the app should tell you about.
@@ -61,14 +63,27 @@ public struct Logbook: Codable, Equatable, Sendable {
         let today = day(containing: now)
         guard today.task(taskID) != nil else { throw PomopomoError.noSuchTask }
         guard !today.hasStartedPomodoro(on: taskID) else { throw PomopomoError.estimateLocked }
-        updateDay(containing: now) { day in
-            day.tasks[day.tasks.firstIndex { $0.id == taskID }!].estimate = estimate
-        }
+        updateTask(taskID, now: now) { $0.estimate = estimate }
+    }
+
+    /// Marks the Task finished. Done is final.
+    public mutating func markDone(_ taskID: Task.ID, now: Date) throws {
+        guard day(containing: now).task(taskID) != nil else { throw PomopomoError.noSuchTask }
+        updateTask(taskID, now: now) { $0.isDone = true }
+    }
+
+    /// Removes a Task, which is only allowed until the first Pomodoro on it starts.
+    public mutating func deleteTask(_ taskID: Task.ID, now: Date) throws {
+        let today = day(containing: now)
+        guard today.task(taskID) != nil else { throw PomopomoError.noSuchTask }
+        guard !today.hasStartedPomodoro(on: taskID) else { throw PomopomoError.taskHasPomodoros }
+        updateDay(containing: now) { day in day.tasks.removeAll { $0.id == taskID } }
     }
 
     public mutating func startPomodoro(on taskID: Task.ID, now: Date) throws {
         advance(to: now)
-        guard day(containing: now).task(taskID) != nil else { throw PomopomoError.noSuchTask }
+        guard let task = day(containing: now).task(taskID) else { throw PomopomoError.noSuchTask }
+        guard !task.isDone else { throw PomopomoError.taskIsDone }
         switch activePomodoro(now: now)?.state {
         case .running: throw PomopomoError.pomodoroAlreadyRunning
         case .paused: try voidPomodoro(now: now)
@@ -77,7 +92,7 @@ public struct Logbook: Codable, Equatable, Sendable {
         let length = settings.pomodoroLength
         var pomodoro = Pomodoro(id: UUID(), taskID: taskID, length: length, state: .running(endsAt: now + length))
         let today = day(containing: now)
-        if today.completedCount(of: taskID) >= today.task(taskID)!.estimate {
+        if today.completedCount(of: taskID) >= task.estimate {
             pomodoro.marks.insert(.overrun)
         }
         updateDay(containing: now) { $0.pomodoros.append(pomodoro) }
@@ -136,6 +151,14 @@ public struct Logbook: Codable, Equatable, Sendable {
               let index = days[dayIndex].pomodoros.firstIndex(where: \.isUnfinished)
         else { throw missing }
         try change(&days[dayIndex].pomodoros[index])
+    }
+
+    private mutating func updateTask(_ taskID: Task.ID, now: Date, _ change: (inout Task) -> Void) {
+        updateDay(containing: now) { day in
+            if let index = day.tasks.firstIndex(where: { $0.id == taskID }) {
+                change(&day.tasks[index])
+            }
+        }
     }
 
     private mutating func updateDay(containing now: Date, _ change: (inout Day) -> Void) {
