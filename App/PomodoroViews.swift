@@ -4,12 +4,13 @@ import SwiftUI
 /// A Task's Pomodoros in the order they started, each with its state and Marks.
 struct PomodoroHistory: View {
     let pomodoros: [Pomodoro]
+    let isPast: Bool
 
     var body: some View {
         if !pomodoros.isEmpty {
             HStack(spacing: 6) {
                 ForEach(pomodoros) { pomodoro in
-                    PomodoroChip(pomodoro: pomodoro)
+                    PomodoroChip(pomodoro: pomodoro, isPast: isPast)
                 }
             }
         }
@@ -18,6 +19,8 @@ struct PomodoroHistory: View {
 
 struct PomodoroChip: View {
     let pomodoro: Pomodoro
+    /// On a past Day a Paused Pomodoro is Paused for good.
+    let isPast: Bool
 
     var body: some View {
         HStack(spacing: 1) {
@@ -34,7 +37,7 @@ struct PomodoroChip: View {
     private var stateSymbol: String {
         switch pomodoro.state {
         case .running: "circle.dotted"
-        case .paused: "pause.circle"
+        case .paused: isPast ? "pause.circle.fill" : "pause.circle"
         case .completed: "checkmark.circle.fill"
         case .voided: "xmark.circle"
         }
@@ -51,7 +54,7 @@ struct PomodoroChip: View {
     private var helpText: String {
         let state = switch pomodoro.state {
         case .running: "Running"
-        case .paused: "Paused"
+        case .paused: isPast ? "Paused for good" : "Paused"
         case .completed: "Completed"
         case .voided: "Voided"
         }

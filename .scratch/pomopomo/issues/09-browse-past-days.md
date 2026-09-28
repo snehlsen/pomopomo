@@ -4,7 +4,7 @@
 
 **Blocked by:** 08 (day rollover)
 
-**Status:** ready-for-agent
+**Status:** done
 
 - [ ] You can move back and forward between Days, and jump back to today.
 - [ ] A past Day shows its Tasks, their Estimates and whether each is Done.

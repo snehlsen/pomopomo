@@ -56,6 +56,12 @@ public struct Logbook: Codable, Equatable, Sendable {
         days.first { $0.date == date } ?? Day(date: date)
     }
 
+    /// The Days you can look back through: every earlier Day with something on it, then today.
+    public func browsableDates(now: Date) -> [DayDate] {
+        let today = openDate(now: now)
+        return days.map(\.date).filter { $0 < today }.sorted() + [today]
+    }
+
     /// Today's Running or Paused Pomodoro, if any. A Day has at most one.
     public func activePomodoro(now: Date) -> Pomodoro? {
         today(now: now).pomodoros.first(where: \.isUnfinished)

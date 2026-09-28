@@ -8,12 +8,16 @@ struct MenuView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             header
-            if let pomodoro = model.activePomodoro {
-                ActivePomodoroView(model: model, pomodoro: pomodoro)
+            if model.isShowingPastDay {
+                TaskListView(model: model, day: model.shownDay, isPast: true)
+            } else {
+                if let pomodoro = model.activePomodoro {
+                    ActivePomodoroView(model: model, pomodoro: pomodoro)
+                }
+                BreakView(model: model)
+                TaskListView(model: model, day: model.today, isPast: false)
+                AddTaskView(model: model)
             }
-            BreakView(model: model)
-            TaskListView(model: model, day: model.today)
-            AddTaskView(model: model)
             if let message = model.errorMessage {
                 Text(message).font(.caption).foregroundStyle(.red)
             }
@@ -29,8 +33,21 @@ struct MenuView: View {
     }
 
     private var header: some View {
-        Text(model.today.date.start(in: model.logbook.calendar), format: .dateTime.weekday(.wide).day().month(.wide))
-            .font(.headline)
+        HStack {
+            Button { model.browse(by: -1) } label: { Image(systemName: "chevron.left") }
+                .disabled(!model.canBrowseBack)
+                .help("Previous Day")
+            Text(model.shownDay.date.start(in: model.logbook.calendar), format: .dateTime.weekday(.wide).day().month(.wide))
+                .font(.headline)
+            Button { model.browse(by: 1) } label: { Image(systemName: "chevron.right") }
+                .disabled(!model.isShowingPastDay)
+                .help("Next Day")
+            Spacer()
+            if model.isShowingPastDay {
+                Button("Today") { model.browsedDate = nil }
+            }
+        }
+        .buttonStyle(.borderless)
     }
 }
 
@@ -115,14 +132,16 @@ extension Break.Kind {
 struct TaskListView: View {
     let model: AppModel
     let day: Day
+    /// A past Day is shown exactly as it was left, and can't be changed.
+    let isPast: Bool
 
     var body: some View {
         if day.tasks.isEmpty {
-            Text("No Tasks yet today.").foregroundStyle(.secondary)
+            Text(isPast ? "No Tasks on this Day." : "No Tasks yet today.").foregroundStyle(.secondary)
         } else {
             VStack(alignment: .leading, spacing: 8) {
                 ForEach(day.tasks) { task in
-                    TaskRow(model: model, day: day, task: task)
+                    TaskRow(model: model, day: day, task: task, isPast: isPast)
                 }
             }
         }
@@ -133,6 +152,7 @@ struct TaskRow: View {
     let model: AppModel
     let day: Day
     let task: PomopomoCore.Task
+    let isPast: Bool
 
     var body: some View {
         HStack(alignment: .firstTextBaseline) {
@@ -142,7 +162,7 @@ struct TaskRow: View {
                     .foregroundStyle(task.isDone ? .secondary : .primary)
                 HStack(spacing: 4) {
                     Text("\(day.completedCount(of: task.id)) of \(task.estimate) Pomodoros")
-                    if !day.hasStartedPomodoro(on: task.id) && !task.isDone {
+                    if !isPast && !day.hasStartedPomodoro(on: task.id) && !task.isDone {
                         Stepper("Estimate", value: estimate, in: 1...20)
                             .labelsHidden()
                             .controlSize(.mini)
@@ -151,7 +171,7 @@ struct TaskRow: View {
                 }
                 .font(.caption)
                 .foregroundStyle(.secondary)
-                PomodoroHistory(pomodoros: day.pomodoros(on: task.id))
+                PomodoroHistory(pomodoros: day.pomodoros(on: task.id), isPast: isPast)
             }
             Spacer()
             if task.isDone {
@@ -159,7 +179,7 @@ struct TaskRow: View {
                     .labelStyle(.titleAndIcon)
                     .font(.caption)
                     .foregroundStyle(.green)
-            } else {
+            } else if !isPast {
                 Button("Start") {
                     model.perform { logbook, now in try logbook.startPomodoro(on: task.id, now: now) }
                 }

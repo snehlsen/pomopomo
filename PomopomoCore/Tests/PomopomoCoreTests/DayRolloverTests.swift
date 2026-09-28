@@ -78,3 +78,17 @@ import Testing
         #expect(logbook.today(now: sept29(9)).pomodoros[0].marks.isEmpty)
     }
 }
+
+@Suite struct BrowsingTests {
+    @Test func browsableDaysArePastDaysWithSomethingOnThemThenToday() throws {
+        var logbook = newLogbook()
+        let sept26 = utc.date(from: DateComponents(year: 2026, month: 9, day: 26, hour: 9))!
+        try logbook.addTask(name: "Plan", estimate: 1, now: sept26)
+        try logbook.addTask(name: "Write report", estimate: 1, now: sept28(9))
+
+        #expect(logbook.browsableDates(now: sept29(9)) == [
+            DayDate(year: 2026, month: 9, day: 26), sept28Date, sept29Date,
+        ])
+        #expect(logbook.browsableDates(now: sept28(10)) == [DayDate(year: 2026, month: 9, day: 26), sept28Date])
+    }
+}

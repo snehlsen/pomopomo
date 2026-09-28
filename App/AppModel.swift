@@ -32,6 +32,26 @@ final class AppModel {
 
     var today: Day { logbook.today(now: now) }
 
+    /// The Day being looked at: today, or a past Day while browsing. Nil means today.
+    var browsedDate: DayDate?
+
+    var shownDay: Day {
+        guard let browsedDate, browsedDate < today.date else { return today }
+        return logbook.day(on: browsedDate)
+    }
+
+    var isShowingPastDay: Bool { shownDay.date < today.date }
+
+    /// Moves `offset` Days back (negative) or forward (positive) among the Days with something on them.
+    func browse(by offset: Int) {
+        let dates = logbook.browsableDates(now: now)
+        let current = dates.firstIndex(of: shownDay.date) ?? dates.count - 1
+        let target = min(max(current + offset, 0), dates.count - 1)
+        browsedDate = target == dates.count - 1 ? nil : dates[target]
+    }
+
+    var canBrowseBack: Bool { logbook.browsableDates(now: now).first != shownDay.date }
+
     var activePomodoro: Pomodoro? { logbook.activePomodoro(now: now) }
 
     var dueBreak: Break.Kind? { logbook.dueBreak(now: now) }
