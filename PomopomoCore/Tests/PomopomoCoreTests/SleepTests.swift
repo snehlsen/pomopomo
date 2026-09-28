@@ -47,7 +47,7 @@ import Testing
         #expect(logbook.activePomodoro(now: sept28(9, 10))?.state == .paused(remaining: 20 * minute))
     }
 
-    @Test mutating func pomodoroThatFinishedBeforeSleepIsCompletedNotPaused() throws {
+    @Test mutating func pomodoroWhoseTimeWasUpBeforeSleepIsCompletedNotPaused() throws {
         try logbook.startPomodoro(on: task, now: sept28(9))
         // No tick happened between 9:25 and 9:30.
         #expect(logbook.sleep(now: sept28(9, 30)) == [.pomodoroCompleted])

@@ -27,7 +27,7 @@ struct PomodoroChip: View {
             Image(systemName: stateSymbol)
                 .foregroundStyle(stateColor)
             ForEach(Mark.allCases.filter(pomodoro.marks.contains), id: \.self) { mark in
-                MarkBadge(mark: mark)
+                MarkSymbol(mark: mark)
             }
         }
         .font(.caption)
@@ -64,7 +64,7 @@ struct PomodoroChip: View {
 }
 
 /// Every kind of Mark has its own symbol and colour, so they can't be confused.
-struct MarkBadge: View {
+struct MarkSymbol: View {
     let mark: Mark
 
     var body: some View {
