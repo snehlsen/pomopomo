@@ -77,7 +77,7 @@ public struct Logbook: Codable, Equatable, Sendable {
 
     /// The Break counting down at `now`, if any.
     public func runningBreak(now: Date) -> Break? {
-        guard case .running(let running) = breakStatus, running.endsAt > now else { return nil }
+        guard case .running(let running, _) = breakStatus, running.endsAt > now else { return nil }
         return running
     }
 
@@ -182,14 +182,16 @@ public struct Logbook: Codable, Equatable, Sendable {
         advance(to: now)
         guard let kind = dueBreak(now: now) else { throw PomopomoError.noBreakDue }
         let length = kind == .long ? settings.longBreakLength : settings.shortBreakLength
-        breakStatus = .running(Break(kind: kind, length: length, endsAt: now + length))
+        breakStatus = .running(Break(kind: kind, length: length, endsAt: now + length), on: today(now: now).date)
     }
 
     /// Ends the running Break before its time is up. The next Pomodoro gets a Skipped-Break Mark.
     public mutating func endBreak(now: Date) throws {
         advance(to: now)
-        guard runningBreak(now: now) != nil else { throw PomopomoError.noRunningBreak }
-        breakStatus = .endedEarly(on: today(now: now).date)
+        guard case .running(let running, let date) = breakStatus, running.endsAt > now else {
+            throw PomopomoError.noRunningBreak
+        }
+        breakStatus = .endedEarly(on: date)
     }
 
     // MARK: Settings
@@ -216,7 +218,7 @@ public struct Logbook: Codable, Equatable, Sendable {
                 }
             }
         }
-        if case .running(let running) = breakStatus, running.endsAt <= now {
+        if case .running(let running, _) = breakStatus, running.endsAt <= now {
             breakStatus = nil
             events.append(.breakEnded)
         }
@@ -234,11 +236,10 @@ public struct Logbook: Codable, Equatable, Sendable {
         return carriedOver?.date ?? DayDate(now, in: calendar)
     }
 
-    /// Whether starting a Pomodoro now skips a Break: one is due, running, or was ended early.
+    /// Whether starting a Pomodoro on `date` skips that Day's Break: one is due, running, or was ended early.
     private func isSkippingBreak(on date: DayDate) -> Bool {
         switch breakStatus {
-        case .due(let day), .endedEarly(let day): day == date
-        case .running: true
+        case .due(let day), .running(_, let day), .endedEarly(let day): day == date
         case nil: false
         }
     }

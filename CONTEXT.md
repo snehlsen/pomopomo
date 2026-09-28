@@ -15,7 +15,7 @@ _Avoid_: Slot, session, timer, focus block, interval
 ### Breaks
 
 **Break**:
-Timed rest after a Completed Pomodoro, started by you. It is either a Short Break or a Long Break, and like a Pomodoro it keeps the length it started with.
+Timed rest after a Completed Pomodoro, started by you. It is either a Short Break or a Long Break, and like a Pomodoro it keeps the length it started with. A Break belongs to the Day of the Pomodoro before it and never carries over into a new Day: a Pomodoro Completed after midnight on the Day before is offered no Break, and a Break skipped or ended early across midnight leaves no Skipped-Break Mark on the new Day.
 _Avoid_: Pause (Paused is a Pomodoro state), rest, recess
 
 **Short Break**:

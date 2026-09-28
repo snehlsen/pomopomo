@@ -68,6 +68,27 @@ import Testing
         #expect(yesterday.tasks.map(\.isDone) == [false, false])
     }
 
+    @Test mutating func breakRunningAtMidnightLeavesNoMarkOnTheNewDay() throws {
+        try logbook.startPomodoro(on: task, now: sept28(23, 30))
+        logbook.advance(to: sept28(23, 55))
+        try logbook.startBreak(now: sept28(23, 58))
+
+        let newTask = try logbook.addTask(name: "Email", estimate: 1, now: sept29(0, 1))
+        try logbook.startPomodoro(on: newTask, now: sept29(0, 2))
+        #expect(logbook.today(now: sept29(0, 2)).pomodoros[0].marks.isEmpty)
+    }
+
+    @Test mutating func breakEndedEarlyAfterMidnightLeavesNoMarkOnTheNewDay() throws {
+        try logbook.startPomodoro(on: task, now: sept28(23, 30))
+        logbook.advance(to: sept28(23, 55))
+        try logbook.startBreak(now: sept28(23, 58))
+        try logbook.endBreak(now: sept29(0, 1))
+
+        let newTask = try logbook.addTask(name: "Email", estimate: 1, now: sept29(0, 5))
+        try logbook.startPomodoro(on: newTask, now: sept29(0, 10))
+        #expect(logbook.today(now: sept29(0, 10)).pomodoros[0].marks.isEmpty)
+    }
+
     @Test mutating func breakDueOnThePreviousDayIsNotOfferedOnTheNewDay() throws {
         try logbook.startPomodoro(on: task, now: sept28(23, 50))
         logbook.advance(to: sept29(0, 15))
