@@ -1,0 +1,29 @@
+name: Pomopomo
+options:
+  bundleIdPrefix: nl.nehls
+  deploymentTarget:
+    macOS: "14.0"
+packages:
+  PomopomoCore:
+    path: PomopomoCore
+targets:
+  Pomopomo:
+    type: application
+    platform: macOS
+    sources: [App]
+    dependencies:
+      - package: PomopomoCore
+    info:
+      path: App/Info.plist
+      properties:
+        CFBundleDisplayName: Pomopomo
+        LSUIElement: true
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: nl.nehls.pomopomo
+        MARKETING_VERSION: "0.1"
+        CURRENT_PROJECT_VERSION: "1"
+        SWIFT_VERSION: "6.0"
+        CODE_SIGN_IDENTITY: "-"
+        CODE_SIGN_STYLE: Manual
+        ENABLE_HARDENED_RUNTIME: NO

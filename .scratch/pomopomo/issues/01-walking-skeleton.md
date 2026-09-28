@@ -6,7 +6,7 @@ This ticket sets up the structure every later ticket builds on: the menu-bar app
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** done
 
 - [ ] The app runs as a menu-bar app, with no Dock icon.
 - [ ] You can add a Task with a name and an Estimate (at least 1) to today's Day.
