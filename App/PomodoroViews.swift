@@ -73,12 +73,14 @@ struct MarkBadge: View {
     private var symbol: String {
         switch mark {
         case .pause: "pause.fill"
+        case .overrun: "plus.square.fill"
         }
     }
 
     private var color: Color {
         switch mark {
         case .pause: .orange
+        case .overrun: .red
         }
     }
 }
@@ -87,6 +89,7 @@ extension Mark {
     var title: String {
         switch self {
         case .pause: "Pause Mark"
+        case .overrun: "Overrun Mark"
         }
     }
 }

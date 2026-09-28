@@ -95,9 +95,17 @@ struct TaskRow: View {
         HStack(alignment: .firstTextBaseline) {
             VStack(alignment: .leading, spacing: 2) {
                 Text(task.name)
-                Text("\(day.completedCount(of: task.id)) of \(task.estimate) Pomodoros")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                HStack(spacing: 4) {
+                    Text("\(day.completedCount(of: task.id)) of \(task.estimate) Pomodoros")
+                    if !day.hasStartedPomodoro(on: task.id) {
+                        Stepper("Estimate", value: estimate, in: 1...20)
+                            .labelsHidden()
+                            .controlSize(.mini)
+                            .help("Change the Estimate. It locks when the first Pomodoro starts.")
+                    }
+                }
+                .font(.caption)
+                .foregroundStyle(.secondary)
                 PomodoroHistory(pomodoros: day.pomodoros(on: task.id))
             }
             Spacer()
@@ -107,6 +115,15 @@ struct TaskRow: View {
             .disabled(model.isPomodoroRunning)
             .help(model.activePomodoro?.isPaused == true ? "Starting a new Pomodoro voids the Paused one." : "")
         }
+    }
+
+    private var estimate: Binding<Int> {
+        Binding(
+            get: { task.estimate },
+            set: { newValue in
+                model.perform { logbook, now in try logbook.changeEstimate(of: task.id, to: newValue, now: now) }
+            }
+        )
     }
 }
 

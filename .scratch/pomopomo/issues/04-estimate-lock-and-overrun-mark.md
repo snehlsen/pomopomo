@@ -4,7 +4,7 @@
 
 **Blocked by:** 01 (walking skeleton)
 
-**Status:** ready-for-agent
+**Status:** done
 
 - [ ] The Estimate can be edited while no Pomodoro has started on the Task.
 - [ ] The Estimate can't be edited once any Pomodoro on the Task has started, including one later Voided.

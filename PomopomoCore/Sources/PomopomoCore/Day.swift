@@ -29,6 +29,8 @@ public struct Pomodoro: Identifiable, Hashable, Codable, Sendable {
 public enum Mark: String, Hashable, Codable, Sendable, CaseIterable {
     /// Paused at least once.
     case pause
+    /// Went beyond its Task's Estimate.
+    case overrun
 }
 
 /// One calendar day, with its task list and the history of its Pomodoros.
@@ -48,6 +50,12 @@ public struct Day: Hashable, Codable, Sendable {
 
     public func pomodoros(on task: Task.ID) -> [Pomodoro] {
         pomodoros.filter { $0.taskID == task }
+    }
+
+    /// Whether any Pomodoro on the Task has started, even one later Voided.
+    /// From then on the Task's Estimate is locked and the Task can't be deleted.
+    public func hasStartedPomodoro(on task: Task.ID) -> Bool {
+        pomodoros.contains { $0.taskID == task }
     }
 
     /// How many Completed Pomodoros the Task has, which is what counts against its Estimate.

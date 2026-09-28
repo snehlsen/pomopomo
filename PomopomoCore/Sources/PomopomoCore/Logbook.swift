@@ -7,6 +7,7 @@ public enum PomopomoError: Error, Equatable {
     case noRunningPomodoro
     case noPausedPomodoro
     case noUnfinishedPomodoro
+    case estimateLocked
 }
 
 /// Something that happened as time passed, which the app should tell you about.
@@ -55,6 +56,16 @@ public struct Logbook: Codable, Equatable, Sendable {
         return task.id
     }
 
+    public mutating func changeEstimate(of taskID: Task.ID, to estimate: Int, now: Date) throws {
+        guard estimate >= 1 else { throw PomopomoError.invalidEstimate }
+        let today = day(containing: now)
+        guard today.task(taskID) != nil else { throw PomopomoError.noSuchTask }
+        guard !today.hasStartedPomodoro(on: taskID) else { throw PomopomoError.estimateLocked }
+        updateDay(containing: now) { day in
+            day.tasks[day.tasks.firstIndex { $0.id == taskID }!].estimate = estimate
+        }
+    }
+
     public mutating func startPomodoro(on taskID: Task.ID, now: Date) throws {
         advance(to: now)
         guard day(containing: now).task(taskID) != nil else { throw PomopomoError.noSuchTask }
@@ -64,7 +75,11 @@ public struct Logbook: Codable, Equatable, Sendable {
         default: break
         }
         let length = settings.pomodoroLength
-        let pomodoro = Pomodoro(id: UUID(), taskID: taskID, length: length, state: .running(endsAt: now + length))
+        var pomodoro = Pomodoro(id: UUID(), taskID: taskID, length: length, state: .running(endsAt: now + length))
+        let today = day(containing: now)
+        if today.completedCount(of: taskID) >= today.task(taskID)!.estimate {
+            pomodoro.marks.insert(.overrun)
+        }
         updateDay(containing: now) { $0.pomodoros.append(pomodoro) }
     }
 
