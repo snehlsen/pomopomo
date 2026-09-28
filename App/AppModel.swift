@@ -34,6 +34,10 @@ final class AppModel {
 
     var activePomodoro: Pomodoro? { logbook.activePomodoro(now: now) }
 
+    var dueBreak: Break.Kind? { logbook.dueBreak(now: now) }
+
+    var runningBreak: Break? { logbook.runningBreak(now: now) }
+
     var isPomodoroRunning: Bool {
         if case .running = activePomodoro?.state { true } else { false }
     }
@@ -83,7 +87,10 @@ final class AppModel {
         switch event {
         case .pomodoroCompleted:
             content.title = "Pomodoro Completed"
-            content.body = "Time for a Break."
+            content.body = dueBreak == .long ? "Time for a Long Break." : "Time for a Short Break."
+        case .breakEnded:
+            content.title = "Break Over"
+            content.body = "Start the next Pomodoro when you're ready."
         }
         let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil)
         UNUserNotificationCenter.current().add(request)
@@ -115,6 +122,7 @@ extension PomopomoError {
         case .estimateLocked: "The Estimate is locked once a Pomodoro on the Task has started."
         case .taskIsDone: "That Task is Done. Add a new Task for extra work."
         case .taskHasPomodoros: "A Task can't be deleted once a Pomodoro on it has started."
+        case .noBreakDue: "No Break is due."
         }
     }
 }

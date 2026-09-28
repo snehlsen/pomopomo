@@ -60,6 +60,11 @@ public struct Day: Hashable, Codable, Sendable {
         pomodoros.contains { $0.taskID == task }
     }
 
+    /// How many Pomodoros were Completed on this Day, across all Tasks. Sets are counted from this.
+    public var completedCount: Int {
+        pomodoros.filter(\.isCompleted).count
+    }
+
     /// How many Completed Pomodoros the Task has, which is what counts against its Estimate.
     public func completedCount(of task: Task.ID) -> Int {
         pomodoros(on: task).filter(\.isCompleted).count

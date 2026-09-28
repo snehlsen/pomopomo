@@ -11,6 +11,7 @@ struct MenuView: View {
             if let pomodoro = model.activePomodoro {
                 ActivePomodoroView(model: model, pomodoro: pomodoro)
             }
+            BreakView(model: model)
             TaskListView(model: model, day: model.today)
             AddTaskView(model: model)
             if let message = model.errorMessage {
@@ -66,6 +67,44 @@ struct ActivePomodoroView: View {
         .frame(maxWidth: .infinity)
         .padding(.vertical, 6)
         .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 8))
+    }
+}
+
+struct BreakView: View {
+    let model: AppModel
+
+    var body: some View {
+        if let running = model.runningBreak {
+            VStack(spacing: 4) {
+                Text(running.kind.title).font(.subheadline).foregroundStyle(.secondary)
+                Text(max(0, running.endsAt.timeIntervalSince(model.now)).countdown)
+                    .font(.system(size: 36, weight: .semibold, design: .rounded))
+                    .monospacedDigit()
+                    .foregroundStyle(.teal)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 6)
+            .background(.teal.opacity(0.1), in: RoundedRectangle(cornerRadius: 8))
+        } else if let due = model.dueBreak {
+            HStack {
+                Image(systemName: "cup.and.saucer").foregroundStyle(.teal)
+                Text("\(due.title) due")
+                Spacer()
+                Button("Start \(due.title)") {
+                    model.perform { logbook, now in try logbook.startBreak(now: now) }
+                }
+                .keyboardShortcut(.defaultAction)
+            }
+        }
+    }
+}
+
+extension Break.Kind {
+    var title: String {
+        switch self {
+        case .short: "Short Break"
+        case .long: "Long Break"
+        }
     }
 }
 

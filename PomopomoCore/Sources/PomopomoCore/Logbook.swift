@@ -10,11 +10,13 @@ public enum PomopomoError: Error, Equatable {
     case estimateLocked
     case taskIsDone
     case taskHasPomodoros
+    case noBreakDue
 }
 
 /// Something that happened as time passed, which the app should tell you about.
 public enum Event: Equatable, Sendable {
     case pomodoroCompleted
+    case breakEnded
 }
 
 /// Every Day you have worked, and the rules for changing them.
@@ -23,6 +25,7 @@ public enum Event: Equatable, Sendable {
 public struct Logbook: Codable, Equatable, Sendable {
     public private(set) var days: [Day] = []
     public var settings = Settings()
+    private var breakStatus: BreakStatus?
 
     /// Used to work out which Day a moment belongs to. Not stored.
     public var calendar: Calendar = .current
@@ -32,7 +35,7 @@ public struct Logbook: Codable, Equatable, Sendable {
     }
 
     private enum CodingKeys: String, CodingKey {
-        case days, settings
+        case days, settings, breakStatus
     }
 
     // MARK: Queries
@@ -46,6 +49,18 @@ public struct Logbook: Codable, Equatable, Sendable {
     /// The Pomodoro that is Running or Paused at `now`, if any. A Day has at most one.
     public func activePomodoro(now: Date) -> Pomodoro? {
         day(containing: now).pomodoros.first(where: \.isUnfinished)
+    }
+
+    /// The Break that is due at `now` but hasn't been started, if any.
+    public func dueBreak(now: Date) -> Break.Kind? {
+        let today = day(containing: now)
+        guard breakStatus == .due(on: today.date) else { return nil }
+        return today.completedCount % settings.setSize == 0 ? .long : .short
+    }
+
+    /// The Break counting down at `now`, if any.
+    public func runningBreak(now: Date) -> Break? {
+        if case .running(let running) = breakStatus { running } else { nil }
     }
 
     // MARK: Commands
@@ -96,6 +111,7 @@ public struct Logbook: Codable, Equatable, Sendable {
             pomodoro.marks.insert(.overrun)
         }
         updateDay(containing: now) { $0.pomodoros.append(pomodoro) }
+        breakStatus = nil
     }
 
     public mutating func pausePomodoro(now: Date) throws {
@@ -123,6 +139,14 @@ public struct Logbook: Codable, Equatable, Sendable {
         }
     }
 
+    /// Starts the Break that is due: a Short Break, or a Long Break when the last Pomodoro ended a Set.
+    public mutating func startBreak(now: Date) throws {
+        advance(to: now)
+        guard let kind = dueBreak(now: now) else { throw PomopomoError.noBreakDue }
+        let length = kind == .long ? settings.longBreakLength : settings.shortBreakLength
+        breakStatus = .running(Break(kind: kind, length: length, endsAt: now + length))
+    }
+
     /// Settles everything whose time is up by `now`.
     @discardableResult
     public mutating func advance(to now: Date) -> [Event] {
@@ -131,9 +155,14 @@ public struct Logbook: Codable, Equatable, Sendable {
             for pomodoroIndex in days[dayIndex].pomodoros.indices {
                 if case .running(let endsAt) = days[dayIndex].pomodoros[pomodoroIndex].state, endsAt <= now {
                     days[dayIndex].pomodoros[pomodoroIndex].state = .completed(at: endsAt)
+                    breakStatus = .due(on: days[dayIndex].date)
                     events.append(.pomodoroCompleted)
                 }
             }
+        }
+        if case .running(let running) = breakStatus, running.endsAt <= now {
+            breakStatus = nil
+            events.append(.breakEnded)
         }
         return events
     }

@@ -4,7 +4,7 @@
 
 **Blocked by:** 01 (walking skeleton)
 
-**Status:** ready-for-agent
+**Status:** done
 
 - [ ] After a Completed Pomodoro, the due Break (Short or Long) is offered but doesn't start automatically.
 - [ ] Every fourth Completed Pomodoro in a Day is followed by a Long Break, counted across all Tasks. Voided and Paused Pomodoros don't count.
