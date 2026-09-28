@@ -57,6 +57,10 @@ struct ActivePomodoroView: View {
                         model.perform { logbook, now in try logbook.pausePomodoro(now: now) }
                     }
                 }
+                Button("Void", role: .destructive) {
+                    model.perform { logbook, now in try logbook.voidPomodoro(now: now) }
+                }
+                .help("Abandon this Pomodoro. It stays in the history but counts toward nothing.")
             }
         }
         .frame(maxWidth: .infinity)
@@ -100,7 +104,8 @@ struct TaskRow: View {
             Button("Start") {
                 model.perform { logbook, now in try logbook.startPomodoro(on: task.id, now: now) }
             }
-            .disabled(model.activePomodoro != nil)
+            .disabled(model.isPomodoroRunning)
+            .help(model.activePomodoro?.isPaused == true ? "Starting a new Pomodoro voids the Paused one." : "")
         }
     }
 }

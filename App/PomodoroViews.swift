@@ -36,6 +36,7 @@ struct PomodoroChip: View {
         case .running: "circle.dotted"
         case .paused: "pause.circle"
         case .completed: "checkmark.circle.fill"
+        case .voided: "xmark.circle"
         }
     }
 
@@ -43,6 +44,7 @@ struct PomodoroChip: View {
         switch pomodoro.state {
         case .running, .paused: .secondary
         case .completed: .green
+        case .voided: .secondary
         }
     }
 
@@ -51,6 +53,7 @@ struct PomodoroChip: View {
         case .running: "Running"
         case .paused: "Paused"
         case .completed: "Completed"
+        case .voided: "Voided"
         }
         let marks = Mark.allCases.filter(pomodoro.marks.contains).map(\.title)
         return ([state] + marks).joined(separator: " · ")

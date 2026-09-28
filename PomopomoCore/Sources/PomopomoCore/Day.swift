@@ -13,6 +13,7 @@ public struct Pomodoro: Identifiable, Hashable, Codable, Sendable {
         case running(endsAt: Date)
         case paused(remaining: TimeInterval)
         case completed(at: Date)
+        case voided(at: Date)
     }
 
     public let id: UUID
@@ -64,7 +65,7 @@ extension Pomodoro {
     public var isUnfinished: Bool {
         switch state {
         case .running, .paused: true
-        case .completed: false
+        case .completed, .voided: false
         }
     }
 }

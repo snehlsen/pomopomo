@@ -4,7 +4,7 @@
 
 **Blocked by:** 02 (pause and resume)
 
-**Status:** ready-for-agent
+**Status:** done
 
 - [ ] A Running Pomodoro can be Voided.
 - [ ] A Paused Pomodoro can be Voided.

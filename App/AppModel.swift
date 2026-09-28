@@ -34,6 +34,10 @@ final class AppModel {
 
     var activePomodoro: Pomodoro? { logbook.activePomodoro(now: now) }
 
+    var isPomodoroRunning: Bool {
+        if case .running = activePomodoro?.state { true } else { false }
+    }
+
     func tick() {
         now = Date()
         let events = logbook.advance(to: now)
@@ -60,7 +64,7 @@ final class AppModel {
         switch pomodoro.state {
         case .running(let endsAt): max(0, endsAt.timeIntervalSince(now))
         case .paused(let remaining): remaining
-        case .completed: 0
+        case .completed, .voided: 0
         }
     }
 
@@ -107,6 +111,7 @@ extension PomopomoError {
         case .pomodoroAlreadyRunning: "A Pomodoro is already Running."
         case .noRunningPomodoro: "No Pomodoro is Running."
         case .noPausedPomodoro: "No Pomodoro is Paused."
+        case .noUnfinishedPomodoro: "No Pomodoro is Running or Paused."
         }
     }
 }

@@ -6,6 +6,7 @@ public enum PomopomoError: Error, Equatable {
     case pomodoroAlreadyRunning
     case noRunningPomodoro
     case noPausedPomodoro
+    case noUnfinishedPomodoro
 }
 
 /// Something that happened as time passed, which the app should tell you about.
@@ -57,7 +58,11 @@ public struct Logbook: Codable, Equatable, Sendable {
     public mutating func startPomodoro(on taskID: Task.ID, now: Date) throws {
         advance(to: now)
         guard day(containing: now).task(taskID) != nil else { throw PomopomoError.noSuchTask }
-        guard activePomodoro(now: now) == nil else { throw PomopomoError.pomodoroAlreadyRunning }
+        switch activePomodoro(now: now)?.state {
+        case .running: throw PomopomoError.pomodoroAlreadyRunning
+        case .paused: try voidPomodoro(now: now)
+        default: break
+        }
         let length = settings.pomodoroLength
         let pomodoro = Pomodoro(id: UUID(), taskID: taskID, length: length, state: .running(endsAt: now + length))
         updateDay(containing: now) { $0.pomodoros.append(pomodoro) }
@@ -77,6 +82,14 @@ public struct Logbook: Codable, Equatable, Sendable {
         try updateActivePomodoro(now: now, orThrow: .noPausedPomodoro) { pomodoro in
             guard case .paused(let remaining) = pomodoro.state else { throw PomopomoError.noPausedPomodoro }
             pomodoro.state = .running(endsAt: now + remaining)
+        }
+    }
+
+    /// Abandons today's Running or Paused Pomodoro. It stays in the Day's history but counts toward nothing.
+    public mutating func voidPomodoro(now: Date) throws {
+        advance(to: now)
+        try updateActivePomodoro(now: now, orThrow: .noUnfinishedPomodoro) { pomodoro in
+            pomodoro.state = .voided(at: now)
         }
     }
 
