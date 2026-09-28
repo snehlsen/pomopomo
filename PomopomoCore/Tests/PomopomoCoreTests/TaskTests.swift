@@ -15,7 +15,7 @@ import Testing
         #expect(throws: PomopomoError.noSuchTask) {
             try logbook.startPomodoro(on: UUID(), now: sept28(9))
         }
-        #expect(logbook.day(containing: sept28(9)).pomodoros.isEmpty)
+        #expect(logbook.today(now: sept28(9)).pomodoros.isEmpty)
     }
 }
 
@@ -27,7 +27,7 @@ import Testing
         task = try logbook.addTask(name: "Write report", estimate: 1, now: sept28(9))
     }
 
-    var today: Day { logbook.day(containing: sept28(9)) }
+    var today: Day { logbook.today(now: sept28(9)) }
 
     @Test mutating func taskCanBeMarkedDoneBeforeReachingItsEstimate() throws {
         try logbook.markDone(task, now: sept28(9))

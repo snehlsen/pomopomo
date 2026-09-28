@@ -19,6 +19,6 @@ import Testing
         var relaunched = try LogbookStore(directory: directory).load(calendar: utc)
         #expect(relaunched == logbook)
         #expect(relaunched.advance(to: sept28(10)) == [.pomodoroCompleted])
-        #expect(relaunched.day(containing: sept28(10)).completedCount(of: task) == 1)
+        #expect(relaunched.today(now: sept28(10)).completedCount(of: task) == 1)
     }
 }

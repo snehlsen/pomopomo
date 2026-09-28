@@ -12,7 +12,7 @@ import Testing
         logbook.advance(to: sept28(9, 25))
     }
 
-    var today: Day { logbook.day(containing: sept28(9)) }
+    var today: Day { logbook.today(now: sept28(9)) }
 
     @Test mutating func startingAPomodoroInsteadOfTheDueBreakGivesASkippedBreakMark() throws {
         try logbook.startPomodoro(on: task, now: sept28(9, 26))

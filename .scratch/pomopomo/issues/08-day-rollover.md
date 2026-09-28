@@ -4,7 +4,7 @@
 
 **Blocked by:** 02 (pause and resume)
 
-**Status:** ready-for-agent
+**Status:** done
 
 - [ ] On a new calendar date, today's list starts empty.
 - [ ] A Pomodoro Running across midnight is Completed on the Day it started, and it counts toward that Day's Task and Set.

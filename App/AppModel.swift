@@ -30,7 +30,7 @@ final class AppModel {
         tick()
     }
 
-    var today: Day { logbook.day(containing: now) }
+    var today: Day { logbook.today(now: now) }
 
     var activePomodoro: Pomodoro? { logbook.activePomodoro(now: now) }
 

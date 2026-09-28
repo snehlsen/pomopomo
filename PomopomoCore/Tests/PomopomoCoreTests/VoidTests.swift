@@ -11,7 +11,7 @@ import Testing
         try logbook.startPomodoro(on: task, now: sept28(9))
     }
 
-    var today: Day { logbook.day(containing: sept28(12)) }
+    var today: Day { logbook.today(now: sept28(12)) }
 
     @Test mutating func runningPomodoroCanBeVoided() throws {
         try logbook.voidPomodoro(now: sept28(9, 10))

@@ -10,7 +10,7 @@ import Testing
         task = try logbook.addTask(name: "Write report", estimate: 1, now: sept28(9))
     }
 
-    var today: Day { logbook.day(containing: sept28(9)) }
+    var today: Day { logbook.today(now: sept28(9)) }
 
     @Test mutating func estimateCanChangeUntilTheFirstPomodoroStarts() throws {
         try logbook.changeEstimate(of: task, to: 3, now: sept28(9))

@@ -14,7 +14,7 @@ import Testing
 
         let events = logbook.advance(to: sept28(9, 26))
         #expect(events == [.pomodoroCompleted])
-        let today = logbook.day(containing: sept28(9, 26))
+        let today = logbook.today(now: sept28(9, 26))
         #expect(today.pomodoros.map(\.state) == [.completed(at: sept28(9, 25))])
         #expect(today.completedCount(of: task) == 1)
         #expect(today.task(task)?.estimate == 2)
