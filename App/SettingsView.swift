@@ -13,7 +13,7 @@ struct SettingsView: View {
             minutesStepper("Short Break", \.shortBreakLength, in: 1...30)
             minutesStepper("Long Break", \.longBreakLength, in: 1...60)
             Stepper("Set: \(model.logbook.settings.setSize) Pomodoros", value: binding(\.setSize), in: 1...12)
-            Button("Restore the Book's Values") {
+            Button("Restore Default Values") {
                 model.perform { logbook, _ in try logbook.changeSettings(PomopomoCore.Settings()) }
             }
             .disabled(model.logbook.settings == PomopomoCore.Settings())
