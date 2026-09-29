@@ -243,10 +243,11 @@ struct TaskRow: View {
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 if task.isDone {
-                    Label("Done", systemImage: "checkmark.seal.fill")
+                    // Neutral, so Done (for Tasks) never looks like Completed (green, for Pomodoros).
+                    Label("Done", systemImage: "seal")
                         .labelStyle(.titleAndIcon)
                         .font(.caption)
-                        .foregroundStyle(.green)
+                        .foregroundStyle(.secondary)
                 } else if !isPast {
                     startButton
                     actions

@@ -4,7 +4,7 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** todo
+**Status:** done
 
 - [ ] A Done Task and a Completed Pomodoro don't share a symbol or colour.
 - [ ] Green is used only for Completed Pomodoros.
