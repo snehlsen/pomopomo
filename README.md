@@ -49,3 +49,7 @@ make icon   # redraw the app icon from tools/make-icon.swift
 ```
 
 The rules of the method live in `PomopomoCore`, a Swift package with its own tests. The SwiftUI app in `App/` connects them to the clock, the menu bar, notifications and the file on disk.
+
+## License
+
+MIT. See [LICENSE](LICENSE).
