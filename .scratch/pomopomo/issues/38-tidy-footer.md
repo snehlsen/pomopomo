@@ -4,7 +4,7 @@
 
 **Blocked by:** 25 (settings window)
 
-**Status:** todo
+**Status:** done
 
 - [ ] The footer shows one gear menu with Settings…, About Pomopomo and Quit Pomopomo.
 - [ ] ⌘Q still quits and ⌘, still opens the settings.

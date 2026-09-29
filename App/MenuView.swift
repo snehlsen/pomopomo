@@ -35,34 +35,60 @@ struct MenuView: View {
                 Text(message).font(.caption).foregroundStyle(.red)
             }
             Divider()
-            HStack {
-                Button {
-                    showSettings()
-                } label: {
-                    Image(systemName: "gearshape")
-                }
-                .buttonStyle(.borderless)
-                .keyboardShortcut(",")
-                .help("Settings (⌘,)")
-                .accessibilityLabel("Settings")
-                Button {
-                    showsLegend.toggle()
-                } label: {
-                    Image(systemName: "questionmark.circle")
-                }
-                .buttonStyle(.borderless)
-                .help("What the symbols mean")
-                .accessibilityLabel("Key to the symbols")
-                .popover(isPresented: $showsLegend, arrowEdge: .bottom) {
-                    LegendView()
-                }
-                Spacer()
-                Button("Quit Pomopomo") { NSApplication.shared.terminate(nil) }
-                    .keyboardShortcut("q")
-            }
+            footer
         }
         .padding()
         .frame(width: 340)
+    }
+
+    private var footer: some View {
+        HStack {
+            Menu {
+                Button("Settings…", action: showSettings)
+                    .keyboardShortcut(",")
+                Button("About Pomopomo", action: showAbout)
+                Divider()
+                Button("Quit Pomopomo", action: quit)
+                    .keyboardShortcut("q")
+            } label: {
+                Image(systemName: "gearshape")
+            }
+            .menuStyle(.borderlessButton)
+            .menuIndicator(.hidden)
+            .fixedSize()
+            .help("Settings, About and Quit")
+            .accessibilityLabel("Pomopomo menu")
+            Button {
+                showsLegend.toggle()
+            } label: {
+                Image(systemName: "questionmark.circle")
+            }
+            .buttonStyle(.borderless)
+            .help("What the symbols mean")
+            .accessibilityLabel("Key to the symbols")
+            .popover(isPresented: $showsLegend, arrowEdge: .bottom) {
+                LegendView()
+            }
+            Spacer()
+        }
+        .background {
+            // The menu's shortcuts only work while it is open, so these keep ⌘, and ⌘Q working.
+            Group {
+                Button("Settings", action: showSettings).keyboardShortcut(",")
+                Button("Quit Pomopomo", action: quit).keyboardShortcut("q")
+            }
+            .opacity(0)
+            .accessibilityHidden(true)
+        }
+    }
+
+    private func quit() {
+        NSApplication.shared.terminate(nil)
+    }
+
+    private func showAbout() {
+        NSApp.activate(ignoringOtherApps: true)
+        NSApp.orderFrontStandardAboutPanel(nil)
     }
 
     /// Opens the Settings window in front: a menu-bar app isn't active on its own.
