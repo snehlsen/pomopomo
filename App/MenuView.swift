@@ -117,20 +117,31 @@ struct BreakView: View {
                 Button("End Break Early") {
                     model.perform { logbook, now in try logbook.endBreak(now: now) }
                 }
-                .help("The next Pomodoro will carry a Skipped-Break Mark.")
+                Text("Ending it early or starting a Pomodoro now gives that Pomodoro a Skipped-Break Mark.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.horizontal)
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 6)
             .background(.teal.opacity(0.1), in: RoundedRectangle(cornerRadius: 8))
         } else if let due = model.dueBreak {
-            HStack {
-                Image(systemName: "cup.and.saucer").foregroundStyle(.teal)
-                Text("\(due.title) due")
-                Spacer()
-                Button("Start \(due.title)") {
-                    model.perform { logbook, now in try logbook.startBreak(now: now) }
+            VStack(alignment: .leading, spacing: 2) {
+                HStack {
+                    Image(systemName: "cup.and.saucer").foregroundStyle(.teal)
+                    Text("\(due.title) due")
+                    Spacer()
+                    Button("Start \(due.title)") {
+                        model.perform { logbook, now in try logbook.startBreak(now: now) }
+                    }
+                    .keyboardShortcut(.defaultAction)
                 }
-                .keyboardShortcut(.defaultAction)
+                Text("Starting a Pomodoro instead skips it and gives that Pomodoro a Skipped-Break Mark.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
     }
@@ -196,6 +207,11 @@ struct TaskRow: View {
                     }
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                    if !isPast && !task.isDone && !hasActivePomodoro && nextMarks.contains(.overrun) {
+                        Text("Estimate reached: the next one gets an Overrun Mark.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
                     PomodoroHistory(pomodoros: day.pomodoros(on: task.id), isPast: isPast)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -205,11 +221,7 @@ struct TaskRow: View {
                         .font(.caption)
                         .foregroundStyle(.green)
                 } else if !isPast {
-                    Button("Start") {
-                        model.startPomodoro(on: task.id)
-                    }
-                    .disabled(model.isPomodoroRunning)
-                    .help(model.activePomodoro?.isPaused == true ? "Starting a new Pomodoro voids the Paused one." : "")
+                    startButton
                     actions
                 }
             }
@@ -218,6 +230,50 @@ struct TaskRow: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    /// Says what pressing it will do: resume this Task's Paused Pomodoro, void another Task's Paused one,
+    /// or start a Pomodoro, showing the Marks it will carry.
+    @ViewBuilder
+    private var startButton: some View {
+        if let active = model.activePomodoro, active.isPaused, active.taskID == task.id {
+            Button("Resume") {
+                model.perform { logbook, now in try logbook.resumePomodoro(now: now) }
+            }
+            .help("Resume this Task's Paused Pomodoro.")
+        } else {
+            let voidsPaused = model.activePomodoro?.isPaused == true
+            Button {
+                model.startPomodoro(on: task.id)
+            } label: {
+                HStack(spacing: 3) {
+                    Text(voidsPaused ? "Void & Start" : "Start")
+                    ForEach(Mark.allCases.filter(nextMarks.contains), id: \.self) { mark in
+                        MarkSymbol(mark: mark)
+                    }
+                }
+            }
+            .disabled(model.isPomodoroRunning)
+            .help(startHelp(voidsPaused: voidsPaused))
+        }
+    }
+
+    private var nextMarks: Set<Mark> {
+        model.marksIfStarted(on: task.id)
+    }
+
+    private func startHelp(voidsPaused: Bool) -> String {
+        var lines = ["Start a Pomodoro on this Task."]
+        if voidsPaused {
+            lines.append("The Paused Pomodoro will be Voided and count toward nothing.")
+        }
+        if nextMarks.contains(.skippedBreak) {
+            lines.append("It skips the Break, so it gets a Skipped-Break Mark.")
+        }
+        if nextMarks.contains(.overrun) {
+            lines.append("The Estimate is reached, so it gets an Overrun Mark.")
+        }
+        return lines.joined(separator: " ")
     }
 
     /// Like the Estimate, the name can change until the first Pomodoro on the Task starts.

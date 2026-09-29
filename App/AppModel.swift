@@ -60,6 +60,10 @@ final class AppModel {
 
     var setProgress: SetProgress { logbook.setProgress(now: now) }
 
+    func marksIfStarted(on taskID: PomopomoCore.Task.ID) -> Set<Mark> {
+        logbook.marksIfStarted(on: taskID, now: now)
+    }
+
     var isPomodoroRunning: Bool {
         if case .running = activePomodoro?.state { true } else { false }
     }

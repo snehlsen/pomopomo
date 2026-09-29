@@ -96,6 +96,19 @@ public struct Logbook: Codable, Equatable, Sendable {
         return SetProgress(number: total / size + 1, completed: total % size, size: size, completedToday: total)
     }
 
+    /// The Marks a Pomodoro started on the Task at `now` would carry, so you can know before starting it.
+    public func marksIfStarted(on taskID: Task.ID, now: Date) -> Set<Mark> {
+        let day = today(now: now)
+        var marks: Set<Mark> = []
+        if let task = day.task(taskID), day.completedCount(of: taskID) >= task.estimate {
+            marks.insert(.overrun)
+        }
+        if isSkippingBreak(on: day.date) {
+            marks.insert(.skippedBreak)
+        }
+        return marks
+    }
+
     // MARK: Tasks
 
     @discardableResult
@@ -159,15 +172,9 @@ public struct Logbook: Codable, Equatable, Sendable {
         default: break
         }
 
-        let day = today(now: now)
         let length = settings.pomodoroLength
         var pomodoro = Pomodoro(id: UUID(), taskID: taskID, length: length, state: .running(endsAt: now + length))
-        if day.completedCount(of: taskID) >= task.estimate {
-            pomodoro.marks.insert(.overrun)
-        }
-        if isSkippingBreak(on: day.date) {
-            pomodoro.marks.insert(.skippedBreak)
-        }
+        pomodoro.marks = marksIfStarted(on: taskID, now: now)
         updateToday(now: now) { $0.pomodoros.append(pomodoro) }
         breakStatus = nil
     }

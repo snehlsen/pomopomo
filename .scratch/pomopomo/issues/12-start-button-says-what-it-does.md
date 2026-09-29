@@ -4,7 +4,7 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** todo
+**Status:** done
 
 - [ ] On the row of the Task whose Pomodoro is Paused, the button is Resume, and it resumes that Pomodoro instead of voiding it.
 - [ ] On other rows while a Pomodoro is Paused, the button makes clear that the Paused Pomodoro will be Voided, e.g. "Void & Start" or a confirmation.
