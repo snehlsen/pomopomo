@@ -4,7 +4,7 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** todo
+**Status:** done
 
 - [ ] "Pomodoro Completed" offers a Start Break button that starts the due Short or Long Break.
 - [ ] "Break Over" offers a button that starts a Pomodoro on the last Task, only when that Task isn't Done.

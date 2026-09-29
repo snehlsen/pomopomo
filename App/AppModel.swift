@@ -24,6 +24,7 @@ final class AppModel {
     @ObservationIgnored private let store: LogbookStore
     @ObservationIgnored private var timer: Timer?
     @ObservationIgnored private var activity: NSObjectProtocol?
+    @ObservationIgnored private let notificationHandler = NotificationHandler()
 
     init(store: LogbookStore = .standard) {
         self.store = store
@@ -40,6 +41,8 @@ final class AppModel {
             MainActor.assumeIsolated { self?.tick() }
         }
         observeSleepAndWake()
+        notificationHandler.model = self
+        notificationHandler.register()
         tick()
     }
 
@@ -153,19 +156,68 @@ final class AppModel {
         switch event {
         case .pomodoroCompleted:
             content.title = "Pomodoro Completed"
-            content.body = switch dueBreak {
+            let breakMessage = switch dueBreak {
             case .long: "Time for a Long Break."
             case .short: "Time for a Short Break."
             case nil: "A new Day has begun."
             }
+            content.body = [lastCompletedTask?.name, breakMessage].compactMap { $0 }.joined(separator: " · ")
+            if dueBreak != nil {
+                content.categoryIdentifier = NotificationHandler.Category.breakDue
+            }
         case .breakEnded:
             content.title = "Break Over"
-            content.body = "Start the next Pomodoro when you're ready."
+            if let next = taskToContinue {
+                content.body = "Start the next Pomodoro on \(next.name) when you're ready."
+                content.categoryIdentifier = NotificationHandler.Category.breakOver
+                content.userInfo = [NotificationHandler.taskIDKey: next.id.uuidString]
+            } else {
+                content.body = "Start the next Pomodoro when you're ready."
+            }
         }
-        let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil)
-        UNUserNotificationCenter.current().add(request)
+        post(content)
         if playsSound {
             NSSound(named: "Glass")?.play()
+        }
+    }
+
+    private func post(_ content: UNNotificationContent) {
+        let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil)
+        UNUserNotificationCenter.current().add(request)
+    }
+
+    /// The Task of the Pomodoro Completed last, which may be on the Day before if it ran past midnight.
+    private var lastCompletedTask: PomopomoCore.Task? {
+        for day in logbook.days.reversed() {
+            if let pomodoro = day.pomodoros.last(where: \.isCompleted) {
+                return day.task(pomodoro.taskID)
+            }
+        }
+        return nil
+    }
+
+    /// The Task of today's last Pomodoro, if more Pomodoros can start on it.
+    private var taskToContinue: PomopomoCore.Task? {
+        guard let last = today.pomodoros.last, let task = today.task(last.taskID), !task.isDone else { return nil }
+        return task
+    }
+
+    /// A button on a notification was pressed. If its action is no longer possible, a notification says why.
+    func performNotificationAction(_ action: String, taskID: PomopomoCore.Task.ID?) {
+        switch action {
+        case NotificationHandler.Action.startBreak:
+            perform { logbook, now in try logbook.startBreak(now: now) }
+        case NotificationHandler.Action.startPomodoro:
+            guard let taskID else { return }
+            startPomodoro(on: taskID)
+        default:
+            return
+        }
+        if let errorMessage {
+            let content = UNMutableNotificationContent()
+            content.title = "Couldn't Do That"
+            content.body = errorMessage
+            post(content)
         }
     }
 
@@ -178,6 +230,59 @@ final class AppModel {
                 .appendingPathExtension("unreadable-\(Int(Date().timeIntervalSince1970)).json")
             try? FileManager.default.moveItem(at: store.fileURL, to: backup)
             return Logbook()
+        }
+    }
+}
+
+/// Offers the next step as buttons on notifications, and shows notifications while the popover is open.
+@MainActor
+final class NotificationHandler: NSObject, UNUserNotificationCenterDelegate {
+    enum Category {
+        static let breakDue = "breakDue"
+        static let breakOver = "breakOver"
+    }
+
+    enum Action {
+        static let startBreak = "startBreak"
+        static let startPomodoro = "startPomodoro"
+    }
+
+    nonisolated static let taskIDKey = "taskID"
+
+    weak var model: AppModel?
+
+    func register() {
+        let center = UNUserNotificationCenter.current()
+        center.delegate = self
+        center.setNotificationCategories([
+            UNNotificationCategory(
+                identifier: Category.breakDue,
+                actions: [UNNotificationAction(identifier: Action.startBreak, title: "Start Break")],
+                intentIdentifiers: []
+            ),
+            UNNotificationCategory(
+                identifier: Category.breakOver,
+                actions: [UNNotificationAction(identifier: Action.startPomodoro, title: "Start Next Pomodoro")],
+                intentIdentifiers: []
+            ),
+        ])
+    }
+
+    nonisolated func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        willPresent notification: UNNotification
+    ) async -> UNNotificationPresentationOptions {
+        [.banner, .list]
+    }
+
+    nonisolated func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        didReceive response: UNNotificationResponse
+    ) async {
+        let action = response.actionIdentifier
+        let taskID = (response.notification.request.content.userInfo[Self.taskIDKey] as? String).flatMap(UUID.init)
+        await MainActor.run {
+            model?.performNotificationAction(action, taskID: taskID)
         }
     }
 }
