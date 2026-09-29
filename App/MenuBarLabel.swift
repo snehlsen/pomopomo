@@ -6,15 +6,22 @@ import SwiftUI
 struct MenuBarLabel: View {
     let model: AppModel
 
+    /// Each state has its own icon, so they can be told apart even when the menu bar shows no time.
     var body: some View {
         if let pomodoro = model.activePomodoro {
-            Image(systemName: pomodoro.isPaused ? "pause.circle" : "timer")
+            if pomodoro.isPaused {
+                Image(systemName: "pause.circle").accessibilityLabel("Pomodoro Paused")
+            } else {
+                Image(systemName: "timer.circle.fill").accessibilityLabel("Pomodoro Running")
+            }
             time(model.remaining(of: pomodoro))
         } else if let running = model.runningBreak {
-            Image(systemName: "cup.and.saucer")
+            Image(systemName: "cup.and.saucer").accessibilityLabel("\(running.kind.title) running")
             time(max(0, running.endsAt.timeIntervalSince(model.now)))
+        } else if let due = model.dueBreak {
+            Image(systemName: "cup.and.heat.waves.fill").accessibilityLabel("\(due.title) due")
         } else {
-            Image(systemName: "timer")
+            Image(systemName: "timer").accessibilityLabel("Pomopomo")
         }
     }
 

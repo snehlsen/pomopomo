@@ -4,7 +4,7 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** todo
+**Status:** done
 
 - [ ] While a Break is due, the menu bar shows an icon clearly different from both the idle icon and the Running Break icon.
 - [ ] The icon goes back to normal when the Break starts, is skipped, or the Day ends.
