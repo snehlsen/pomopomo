@@ -4,7 +4,7 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** todo
+**Status:** done
 
 - [ ] With many Tasks, the popover stays on screen and the task list scrolls.
 - [ ] The active Pomodoro or Break card, the Add Task field and the footer stay visible while scrolling.

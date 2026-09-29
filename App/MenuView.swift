@@ -7,6 +7,9 @@ struct MenuView: View {
     @State private var showsSettings = false
     @State private var showsLegend = false
 
+    /// Keeps the popover on screen with many Tasks; the timer card, Add Task and the footer stay visible.
+    private static let taskListMaxHeight: CGFloat = 380
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             header
@@ -14,14 +17,18 @@ struct MenuView: View {
                 if !model.shownDay.tasks.isEmpty {
                     DaySummaryView(summary: model.shownDay.summary)
                 }
-                TaskListView(model: model, day: model.shownDay, isPast: true)
+                CappedScrollView(maxHeight: Self.taskListMaxHeight) {
+                    TaskListView(model: model, day: model.shownDay, isPast: true)
+                }
             } else {
                 SetProgressView(progress: model.setProgress)
                 if let pomodoro = model.activePomodoro {
                     ActivePomodoroView(model: model, pomodoro: pomodoro)
                 }
                 BreakView(model: model)
-                TaskListView(model: model, day: model.today, isPast: false)
+                CappedScrollView(maxHeight: Self.taskListMaxHeight) {
+                    TaskListView(model: model, day: model.today, isPast: false)
+                }
                 AddTaskView(model: model)
             }
             if let message = model.errorMessage {
