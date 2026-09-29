@@ -6,7 +6,7 @@ struct LegendView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             section("Pomodoros") {
-                row(EmptySlot(), "Estimate slot", "One per Pomodoro in the Estimate, filled as Pomodoros are Completed.")
+                row(EmptyBox(), "Estimate box", "One per Pomodoro in the Estimate, filled as Pomodoros are Completed.")
                 row(PomodoroStateSymbol(look: .completed), "Completed", "Its full length of work is done. Only Completed Pomodoros count.")
                 row(PomodoroStateSymbol(look: .running), "Running", "The countdown is ticking.")
                 row(PomodoroStateSymbol(look: .paused), "Paused", "Stopped, and can be resumed from where it stopped.")

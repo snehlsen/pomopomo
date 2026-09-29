@@ -8,7 +8,7 @@ struct MenuView: View {
     @State private var showsLegend = false
     @FocusState private var newTaskFocused: Bool
 
-    /// Keeps the popover on screen with many Tasks; the timer card, Add Task and the footer stay visible.
+    /// Keeps the popover on screen with many Tasks; the countdown card, Add Task and the footer stay visible.
     private static let taskListMaxHeight: CGFloat = 380
 
     var body: some View {
@@ -358,7 +358,7 @@ struct TaskRow: View {
             if hasActivePomodoro {
                 Button("Mark Done…") {}
                     .disabled(true)
-                Text("Finish or Void its Pomodoro first")
+                Text("Wait until its Pomodoro is Completed, or Void it")
             } else {
                 Button("Mark Done…") { confirmingDone = true }
             }
@@ -428,7 +428,7 @@ struct AddTaskView: View {
                     .accessibilityLabel("Estimate")
                     .accessibilityValue("\(estimate) Pomodoros")
                 Button("Add", action: add)
-                    .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty)
+                    .disabled(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             }
             ErrorText(model: model, place: .addTask)
             SplitHint(estimate: estimate)
@@ -439,7 +439,7 @@ struct AddTaskView: View {
     }
 
     private func add() {
-        let trimmed = name.trimmingCharacters(in: .whitespaces)
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
         model.perform(at: .addTask) { logbook, now in try logbook.addTask(name: trimmed, estimate: estimate, now: now) }
         name = ""

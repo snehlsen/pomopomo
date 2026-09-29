@@ -132,7 +132,7 @@ final class AppModel {
     /// Starts a Pomodoro, and the first time one starts asks whether notifications may tell you it's over.
     func startPomodoro(on taskID: PomopomoCore.Task.ID) {
         perform(at: .task(taskID)) { logbook, now in try logbook.startPomodoro(on: taskID, now: now) }
-        guard isPomodoroRunning else { return }
+        guard error == nil else { return }
         // Only asks if you haven't decided yet.
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert]) { _, _ in }
     }
@@ -183,10 +183,12 @@ final class AppModel {
             }
         case .breakEnded:
             content.title = "Break Over"
-            if let next = taskToContinue {
-                content.body = "Start the next Pomodoro on \(next.name) when you're ready."
+            if let last = lastTaskToday, !last.isDone {
+                content.body = "Start the next Pomodoro on \(last.name) when you're ready."
                 content.categoryIdentifier = NotificationHandler.Category.breakOver
-                content.userInfo = [NotificationHandler.taskIDKey: next.id.uuidString]
+                content.userInfo = [NotificationHandler.taskIDKey: last.id.uuidString]
+            } else if let last = lastTaskToday {
+                content.body = "\(last.name) is Done. Start the next Pomodoro on another Task when you're ready."
             } else {
                 content.body = "Start the next Pomodoro when you're ready."
             }
@@ -212,10 +214,9 @@ final class AppModel {
         return nil
     }
 
-    /// The Task of today's last Pomodoro, if more Pomodoros can start on it.
-    private var taskToContinue: PomopomoCore.Task? {
-        guard let last = today.pomodoros.last, let task = today.task(last.taskID), !task.isDone else { return nil }
-        return task
+    /// The Task of today's last Pomodoro, which a Break Over notification offers to continue.
+    private var lastTaskToday: PomopomoCore.Task? {
+        today.pomodoros.last.flatMap { today.task($0.taskID) }
     }
 
     /// A button on a notification was pressed. If its action is no longer possible, a notification says why.
@@ -225,16 +226,25 @@ final class AppModel {
             perform(at: .breaks) { logbook, now in try logbook.startBreak(now: now) }
         case NotificationHandler.Action.startPomodoro:
             guard let taskID else { return }
+            // Starting would Void a Paused Pomodoro, which only the popover warns about, so leave that choice there.
+            guard activePomodoro == nil else {
+                postCouldNotDo("A Pomodoro is already Running or Paused. Open Pomopomo to resume or Void it.")
+                return
+            }
             startPomodoro(on: taskID)
         default:
             return
         }
         if let message = error?.message {
-            let content = UNMutableNotificationContent()
-            content.title = "Couldn't Do That"
-            content.body = message
-            post(content)
+            postCouldNotDo(message)
         }
+    }
+
+    private func postCouldNotDo(_ reason: String) {
+        let content = UNMutableNotificationContent()
+        content.title = "Couldn't Do That"
+        content.body = reason
+        post(content)
     }
 
     /// Loads the stored Logbook. A file that can't be read is moved aside rather than overwritten.

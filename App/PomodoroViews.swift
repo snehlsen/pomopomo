@@ -1,9 +1,9 @@
 import PomopomoCore
 import SwiftUI
 
-/// A Task's Estimate as one slot per estimated Pomodoro, ticked off like Cirillo's paper sheet.
+/// A Task's Estimate as one box per estimated Pomodoro, ticked off like Cirillo's paper sheet.
 ///
-/// Pomodoros appear in the order they started. Completed ones fill the slots; Voided, Paused and
+/// Pomodoros appear in the order they started. Completed ones fill the boxes; Voided, Paused and
 /// Running ones show between them without filling one. Pomodoros beyond the Estimate follow a divider.
 struct PomodoroHistory: View {
     let pomodoros: [Pomodoro]
@@ -16,8 +16,8 @@ struct PomodoroHistory: View {
                 switch item {
                 case .pomodoro(let pomodoro):
                     PomodoroChip(pomodoro: pomodoro, isPast: isPast)
-                case .emptySlot:
-                    EmptySlot()
+                case .emptyBox:
+                    EmptyBox()
                 case .divider:
                     EstimateDivider()
                 }
@@ -27,13 +27,13 @@ struct PomodoroHistory: View {
 
     private enum Item: Identifiable {
         case pomodoro(Pomodoro)
-        case emptySlot(Int)
+        case emptyBox(Int)
         case divider
 
         var id: String {
             switch self {
             case .pomodoro(let pomodoro): pomodoro.id.uuidString
-            case .emptySlot(let index): "empty-\(index)"
+            case .emptyBox(let index): "empty-\(index)"
             case .divider: "divider"
             }
         }
@@ -45,7 +45,7 @@ struct PomodoroHistory: View {
         let beyond = pomodoros.filter { $0.marks.contains(.overrun) }
         let filled = within.filter(\.isCompleted).count
         var items = within.map(Item.pomodoro)
-        items += (0..<max(0, estimate - filled)).map(Item.emptySlot)
+        items += (0..<max(0, estimate - filled)).map(Item.emptyBox)
         if !beyond.isEmpty {
             items.append(.divider)
             items += beyond.map(Item.pomodoro)
@@ -65,18 +65,18 @@ struct EstimateDivider: View {
     }
 }
 
-/// A slot of the Estimate that no Completed Pomodoro has filled yet.
-struct EmptySlot: View {
+/// A box of the Estimate that no Completed Pomodoro has filled yet.
+struct EmptyBox: View {
     var body: some View {
         RoundedRectangle(cornerRadius: 3)
             .strokeBorder(.secondary, lineWidth: 1)
             .frame(width: 12, height: 12)
             .help("Not yet Completed")
-            .accessibilityLabel("Empty slot, not yet Completed")
+            .accessibilityLabel("Empty box, not yet Completed")
     }
 }
 
-/// One Pomodoro with its Marks. A Completed one is a filled slot; the others are small symbols.
+/// One Pomodoro with its Marks. A Completed one is a filled box; the others are small symbols.
 struct PomodoroChip: View {
     let pomodoro: Pomodoro
     /// On a past Day a Paused Pomodoro is Paused for good.

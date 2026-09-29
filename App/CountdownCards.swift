@@ -3,7 +3,7 @@ import SwiftUI
 
 /// The layout shared by the Pomodoro and Break cards: what is timing, the countdown,
 /// a bar showing progress through its length, and the controls.
-struct TimerCard<Controls: View>: View {
+struct CountdownCard<Controls: View>: View {
     let title: String
     let remaining: TimeInterval
     let length: TimeInterval
@@ -73,7 +73,7 @@ struct ActivePomodoroView: View {
     @State private var confirmingVoid = false
 
     var body: some View {
-        TimerCard(
+        CountdownCard(
             title: model.today.task(pomodoro.taskID)?.name ?? "",
             remaining: model.remaining(of: pomodoro),
             length: pomodoro.length,
@@ -114,6 +114,7 @@ struct ActivePomodoroView: View {
             HStack {
                 Button("Keep It") { confirmingVoid = false }
                     .keyboardShortcut(.cancelAction)
+                    .help("Keep the Pomodoro (Esc)")
                 Button("Void", role: .destructive) {
                     model.perform(at: .pomodoro) { logbook, now in try logbook.voidPomodoro(now: now) }
                     confirmingVoid = false
@@ -128,7 +129,7 @@ struct BreakView: View {
 
     var body: some View {
         if let running = model.runningBreak {
-            TimerCard(
+            CountdownCard(
                 title: running.kind.title,
                 remaining: max(0, running.endsAt.timeIntervalSince(model.now)),
                 length: running.length,
@@ -153,6 +154,7 @@ struct BreakView: View {
                         model.perform(at: .breaks) { logbook, now in try logbook.startBreak(now: now) }
                     }
                     .keyboardShortcut(.defaultAction)
+                    .help("Start the \(due.title) (Return)")
                 }
                 Text("Starting a Pomodoro instead skips it and gives that Pomodoro a Skipped-Break Mark.")
                     .font(.caption)
