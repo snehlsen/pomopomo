@@ -224,9 +224,10 @@ struct TaskRow: View {
                         PomodoroHistory(pomodoros: day.pomodoros(on: task.id), estimate: task.estimate, isPast: isPast)
                         if !isPast && !day.hasStartedPomodoro(on: task.id) && !task.isDone {
                             Stepper("Estimate", value: estimate, in: 1...20)
-                                .labelsHidden()
                                 .controlSize(.mini)
                                 .help("Change the Estimate. It locks when the first Pomodoro starts.")
+                                .accessibilityLabel("Estimate")
+                                .accessibilityValue("\(task.estimate) Pomodoros")
                         }
                     }
                     .font(.caption)
@@ -409,8 +410,11 @@ struct AddTaskView: View {
         HStack {
             TextField("New Task", text: $name)
                 .onSubmit(add)
-            Stepper("\(estimate)", value: $estimate, in: 1...20)
+            Stepper("Estimate \(estimate)", value: $estimate, in: 1...20)
+                .fixedSize()
                 .help("Estimate: how many Pomodoros you expect it to take")
+                .accessibilityLabel("Estimate")
+                .accessibilityValue("\(estimate) Pomodoros")
             Button("Add", action: add)
                 .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty)
         }

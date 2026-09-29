@@ -4,7 +4,7 @@
 
 **Blocked by:** 16 (estimate as boxes)
 
-**Status:** todo
+**Status:** done
 
 - [ ] The Add Task control visibly says it sets the Estimate.
 - [ ] A row whose Estimate can still change visibly offers to change it.
