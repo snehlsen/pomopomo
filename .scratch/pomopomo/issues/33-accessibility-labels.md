@@ -4,7 +4,7 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** todo
+**Status:** done
 
 - [ ] VoiceOver reads each Pomodoro's state and Marks in the terms of CONTEXT.md.
 - [ ] The countdown, Estimate controls and ⋯ menu have meaningful VoiceOver labels.

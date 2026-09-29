@@ -23,6 +23,7 @@ struct PomodoroHistory: View {
                         .fill(.secondary)
                         .frame(width: 1, height: 12)
                         .help("Beyond the Estimate")
+                        .accessibilityLabel("Beyond the Estimate")
                 }
             }
         }
@@ -64,6 +65,7 @@ struct EmptySlot: View {
             .strokeBorder(.secondary, lineWidth: 1)
             .frame(width: 12, height: 12)
             .help("Not yet Completed")
+            .accessibilityLabel("Empty slot, not yet Completed")
     }
 }
 
@@ -93,7 +95,9 @@ struct PomodoroChip: View {
             }
         }
         .font(.caption)
-        .help(helpText)
+        .help(description.joined(separator: " · "))
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(description.joined(separator: ", "))
     }
 
     private var stateSymbol: String {
@@ -105,15 +109,15 @@ struct PomodoroChip: View {
         }
     }
 
-    private var helpText: String {
+    /// Its state and Marks in the words of the glossary, like ["Completed", "Pause Mark"].
+    private var description: [String] {
         let state = switch pomodoro.state {
         case .running: "Running"
         case .paused: isPast ? "Paused for good" : "Paused"
         case .completed: "Completed"
         case .voided: "Voided"
         }
-        let marks = Mark.allCases.filter(pomodoro.marks.contains).map(\.title)
-        return ([state] + marks).joined(separator: " · ")
+        return [state] + Mark.allCases.filter(pomodoro.marks.contains).map(\.title)
     }
 }
 
@@ -125,6 +129,7 @@ struct MarkSymbol: View {
         Image(systemName: symbol)
             .foregroundStyle(color)
             .help(mark.title)
+            .accessibilityLabel(mark.title)
     }
 
     private var symbol: String {

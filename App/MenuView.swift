@@ -39,6 +39,7 @@ struct MenuView: View {
                 }
                 .buttonStyle(.borderless)
                 .help("Settings")
+                .accessibilityLabel("Settings")
                 Spacer()
                 Button("Quit Pomopomo") { NSApplication.shared.terminate(nil) }
                     .keyboardShortcut("q")
@@ -53,11 +54,13 @@ struct MenuView: View {
             Button { model.browse(by: -1) } label: { Image(systemName: "chevron.left") }
                 .disabled(!model.canBrowseBack)
                 .help("Previous Day")
+                .accessibilityLabel("Previous Day")
             Text(model.shownDay.date.start(in: model.logbook.calendar), format: .dateTime.weekday(.wide).day().month(.wide))
                 .font(.headline)
             Button { model.browse(by: 1) } label: { Image(systemName: "chevron.right") }
                 .disabled(!model.isShowingPastDay)
                 .help("Next Day")
+                .accessibilityLabel("Next Day")
             Spacer()
             if model.isShowingPastDay {
                 Button("Today") { model.browsedDate = nil }
@@ -82,6 +85,9 @@ struct ActivePomodoroView: View {
                 .font(.system(size: 36, weight: .semibold, design: .rounded))
                 .monospacedDigit()
                 .foregroundStyle(pomodoro.isPaused ? .secondary : .primary)
+                .accessibilityLabel(
+                    "\(model.remaining(of: pomodoro).spokenCountdown) left\(pomodoro.isPaused ? ", Paused" : "")"
+                )
             if confirmingVoid {
                 voidConfirmation
             } else {
@@ -138,6 +144,7 @@ struct BreakView: View {
                     .font(.system(size: 36, weight: .semibold, design: .rounded))
                     .monospacedDigit()
                     .foregroundStyle(.teal)
+                    .accessibilityLabel("\(max(0, running.endsAt.timeIntervalSince(model.now)).spokenCountdown) left")
                 Button("End Break Early") {
                     model.perform { logbook, now in try logbook.endBreak(now: now) }
                 }
@@ -374,6 +381,7 @@ struct TaskRow: View {
         .menuIndicator(.hidden)
         .fixedSize()
         .help("Task actions")
+        .accessibilityLabel("Actions for \(task.name)")
     }
 
     /// Done is final, so it takes a second, deliberate click.
