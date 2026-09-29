@@ -10,6 +10,15 @@ import Testing
         }
     }
 
+    @Test func nameIsTrimmedAndMustNotBeEmpty() throws {
+        var logbook = newLogbook()
+        #expect(throws: PomopomoError.invalidName) {
+            try logbook.addTask(name: " \n ", estimate: 1, now: sept28(9))
+        }
+        let task = try logbook.addTask(name: "  Write report ", estimate: 1, now: sept28(9))
+        #expect(logbook.today(now: sept28(9)).task(task)?.name == "Write report")
+    }
+
     @Test func pomodoroCanOnlyStartOnATaskOfToday() {
         var logbook = newLogbook()
         #expect(throws: PomopomoError.noSuchTask) {
@@ -65,6 +74,14 @@ import Testing
         try logbook.markDone(task, now: sept28(9))
         #expect(throws: PomopomoError.taskIsDone) { try logbook.startPomodoro(on: task, now: sept28(9, 1)) }
         #expect(today.pomodoros.isEmpty)
+    }
+
+    @Test mutating func doneTaskCannotBeRenamedReEstimatedOrDeleted() throws {
+        try logbook.markDone(task, now: sept28(9))
+        #expect(throws: PomopomoError.taskIsDone) { try logbook.renameTask(task, to: "Email", now: sept28(9, 1)) }
+        #expect(throws: PomopomoError.taskIsDone) { try logbook.changeEstimate(of: task, to: 2, now: sept28(9, 1)) }
+        #expect(throws: PomopomoError.taskIsDone) { try logbook.deleteTask(task, now: sept28(9, 1)) }
+        #expect(today.task(task) == Task(id: task, name: "Write report", estimate: 1, isDone: true))
     }
 
     @Test mutating func taskWithoutStartedPomodorosCanBeDeleted() throws {

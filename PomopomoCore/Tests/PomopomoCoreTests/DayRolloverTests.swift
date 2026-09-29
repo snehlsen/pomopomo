@@ -60,10 +60,10 @@ import Testing
     @Test mutating func nothingOnAPastDayCanBeChanged() throws {
         let unstarted = try logbook.addTask(name: "Email", estimate: 1, now: sept28(23))
         let now = sept29(9)
-        #expect(throws: PomopomoError.noSuchTask) { try logbook.startPomodoro(on: task, now: now) }
-        #expect(throws: PomopomoError.noSuchTask) { try logbook.markDone(task, now: now) }
-        #expect(throws: PomopomoError.noSuchTask) { try logbook.changeEstimate(of: unstarted, to: 2, now: now) }
-        #expect(throws: PomopomoError.noSuchTask) { try logbook.deleteTask(unstarted, now: now) }
+        #expect(throws: PomopomoError.dayIsPast) { try logbook.startPomodoro(on: task, now: now) }
+        #expect(throws: PomopomoError.dayIsPast) { try logbook.markDone(task, now: now) }
+        #expect(throws: PomopomoError.dayIsPast) { try logbook.changeEstimate(of: unstarted, to: 2, now: now) }
+        #expect(throws: PomopomoError.dayIsPast) { try logbook.deleteTask(unstarted, now: now) }
         #expect(yesterday.tasks.map(\.estimate) == [3, 1])
         #expect(yesterday.tasks.map(\.isDone) == [false, false])
     }

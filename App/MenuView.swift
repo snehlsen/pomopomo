@@ -201,6 +201,9 @@ struct TaskListView: View {
     }
 }
 
+/// How far the Estimate steppers go. Not a rule of the method, just where the stepper stops.
+private let estimateRange = 1...20
+
 struct TaskRow: View {
     let model: AppModel
     let day: Day
@@ -211,6 +214,7 @@ struct TaskRow: View {
     @FocusState private var nameFieldFocused: Bool
 
     var body: some View {
+        let options = model.options(for: task.id)
         VStack(alignment: .leading, spacing: 6) {
             HStack(alignment: .firstTextBaseline) {
                 VStack(alignment: .leading, spacing: 2) {
@@ -220,13 +224,13 @@ struct TaskRow: View {
                         Text(task.name)
                             .strikethrough(task.isDone)
                             .foregroundStyle(task.isDone ? .secondary : .primary)
-                            .onTapGesture(count: 2) { if canRename { startRenaming() } }
+                            .onTapGesture(count: 2) { if options.rename == .allowed { startRenaming() } }
                     }
                     HStack(spacing: 6) {
                         PomodoroHistory(pomodoros: day.pomodoros(on: task.id), estimate: task.estimate, isPast: isPast)
-                        if !isPast && !day.hasStartedPomodoro(on: task.id) && !task.isDone {
+                        if options.changeEstimate == .allowed {
                             // Next to the boxes it adds and removes, so it needs no word of its own.
-                            Stepper("Estimate", value: estimate, in: 1...20)
+                            Stepper("Estimate", value: estimate, in: estimateRange)
                                 .labelsHidden()
                                 .controlSize(.mini)
                                 .help("Change the Estimate. It locks when the first Pomodoro starts.")
@@ -236,10 +240,10 @@ struct TaskRow: View {
                     }
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                    if !isPast && !day.hasStartedPomodoro(on: task.id) && !task.isDone {
+                    if options.changeEstimate == .allowed {
                         SplitHint(estimate: task.estimate)
                     }
-                    if !isPast && !task.isDone && !hasActivePomodoro && nextMarks.contains(.overrun) {
+                    if options.start.marks.contains(.overrun) {
                         Text("Estimate reached: the next one gets an Overrun Mark.")
                             .font(.caption)
                             .foregroundStyle(.secondary)
@@ -252,20 +256,19 @@ struct TaskRow: View {
                         .labelStyle(.titleAndIcon)
                         .font(.caption)
                         .foregroundStyle(.secondary)
-                } else if !isPast {
-                    startButton
-                    actions
                 }
+                startButton(options.start)
+                actions(options)
             }
-            if confirmingDone && !task.isDone {
-                doneConfirmation
+            if confirmingDone && options.markDone != .refused(.taskIsDone) {
+                doneConfirmation(options.markDone)
             }
             ErrorText(model: model, place: .task(task.id))
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .background {
             // Drawn outside the row's frame, so highlighting it doesn't move anything.
-            if hasActivePomodoro && !isPast {
+            if model.activePomodoro?.taskID == task.id {
                 RoundedRectangle(cornerRadius: 8)
                     .fill(Color.accentColor.opacity(0.12))
                     .padding(-6)
@@ -276,53 +279,49 @@ struct TaskRow: View {
     /// Says what pressing it will do: resume this Task's Paused Pomodoro, void another Task's Paused one,
     /// or start a Pomodoro, showing the Marks it will carry.
     @ViewBuilder
-    private var startButton: some View {
-        if let active = model.activePomodoro, active.isPaused, active.taskID == task.id {
+    private func startButton(_ outcome: StartOutcome) -> some View {
+        switch outcome {
+        case .resume:
             Button("Resume") {
                 model.perform(at: .task(task.id)) { logbook, now in try logbook.resumePomodoro(now: now) }
             }
             .help("Resume this Task's Paused Pomodoro.")
-        } else {
-            let voidsPaused = model.activePomodoro?.isPaused == true
+        case .start(let marks), .voidAndStart(let marks):
+            let voidsPaused = outcome == .voidAndStart(marks: marks)
             Button {
                 model.startPomodoro(on: task.id)
             } label: {
                 HStack(spacing: 3) {
                     Text(voidsPaused ? "Void & Start" : "Start")
-                    ForEach(Mark.allCases.filter(nextMarks.contains), id: \.self) { mark in
+                    ForEach(Mark.allCases.filter(marks.contains), id: \.self) { mark in
                         MarkSymbol(mark: mark)
                     }
                 }
             }
+            .help(startHelp(voidsPaused: voidsPaused, marks: marks))
+        case .refused(.pomodoroAlreadyRunning):
             // While a Pomodoro Runs no Start can be used; hide it but keep its space so rows don't jump.
-            .disabled(model.isPomodoroRunning)
-            .opacity(model.isPomodoroRunning ? 0 : 1)
-            .accessibilityHidden(model.isPomodoroRunning)
-            .help(startHelp(voidsPaused: voidsPaused))
+            Button("Start") {}
+                .disabled(true)
+                .opacity(0)
+                .accessibilityHidden(true)
+        case .refused:
+            EmptyView()
         }
     }
 
-    private var nextMarks: Set<Mark> {
-        model.marksIfStarted(on: task.id)
-    }
-
-    private func startHelp(voidsPaused: Bool) -> String {
+    private func startHelp(voidsPaused: Bool, marks: Set<Mark>) -> String {
         var lines = ["Start a Pomodoro on this Task."]
         if voidsPaused {
             lines.append("The Paused Pomodoro will be Voided and count toward nothing.")
         }
-        if nextMarks.contains(.skippedBreak) {
+        if marks.contains(.skippedBreak) {
             lines.append("It skips the Break, so it gets a Skipped-Break Mark.")
         }
-        if nextMarks.contains(.overrun) {
+        if marks.contains(.overrun) {
             lines.append("The Estimate is reached, so it gets an Overrun Mark.")
         }
         return lines.joined(separator: " ")
-    }
-
-    /// Like the Estimate, the name can change until the first Pomodoro on the Task starts.
-    private var canRename: Bool {
-        !isPast && !task.isDone && !day.hasStartedPomodoro(on: task.id)
     }
 
     private var nameField: some View {
@@ -350,40 +349,40 @@ struct TaskRow: View {
         model.perform(at: .task(task.id)) { logbook, now in try logbook.renameTask(task.id, to: name, now: now) }
     }
 
-    /// Whether this Task's Pomodoro is Running or Paused, which rules out marking it Done.
-    private var hasActivePomodoro: Bool {
-        model.activePomodoro?.taskID == task.id
-    }
-
-    private var actions: some View {
-        Menu {
-            if hasActivePomodoro {
-                Button("Mark Done…") {}
-                    .disabled(true)
-                Text("Wait until its Pomodoro is Completed, or Void it")
-            } else {
-                Button("Mark Done…") { confirmingDone = true }
-            }
-            if canRename {
-                Button("Rename…", action: startRenaming)
-            }
-            if !day.hasStartedPomodoro(on: task.id) {
-                Button("Delete Task", role: .destructive) {
-                    model.perform(at: .task(task.id)) { logbook, now in try logbook.deleteTask(task.id, now: now) }
+    /// Only what the Task allows now. Mark Done stays in view while its Pomodoro is unfinished, saying what to do.
+    @ViewBuilder
+    private func actions(_ options: TaskOptions) -> some View {
+        let waitsForPomodoro = options.markDone == .refused(.taskHasUnfinishedPomodoro)
+        if options.markDone == .allowed || waitsForPomodoro || options.rename == .allowed || options.delete == .allowed {
+            Menu {
+                if waitsForPomodoro {
+                    Button("Mark Done…") {}
+                        .disabled(true)
+                    Text("Wait until its Pomodoro is Completed, or Void it")
+                } else if options.markDone == .allowed {
+                    Button("Mark Done…") { confirmingDone = true }
                 }
+                if options.rename == .allowed {
+                    Button("Rename…", action: startRenaming)
+                }
+                if options.delete == .allowed {
+                    Button("Delete Task", role: .destructive) {
+                        model.perform(at: .task(task.id)) { logbook, now in try logbook.deleteTask(task.id, now: now) }
+                    }
+                }
+            } label: {
+                Image(systemName: "ellipsis.circle")
             }
-        } label: {
-            Image(systemName: "ellipsis.circle")
+            .menuStyle(.borderlessButton)
+            .menuIndicator(.hidden)
+            .fixedSize()
+            .help("Task actions")
+            .accessibilityLabel("Actions for \(task.name)")
         }
-        .menuStyle(.borderlessButton)
-        .menuIndicator(.hidden)
-        .fixedSize()
-        .help("Task actions")
-        .accessibilityLabel("Actions for \(task.name)")
     }
 
     /// Done is final, so it takes a second, deliberate click.
-    private var doneConfirmation: some View {
+    private func doneConfirmation(_ markDone: Availability) -> some View {
         HStack {
             Text("Mark Done? No more Pomodoros can start on it.")
                 .font(.caption)
@@ -394,7 +393,7 @@ struct TaskRow: View {
                 model.perform(at: .task(task.id)) { logbook, now in try logbook.markDone(task.id, now: now) }
                 confirmingDone = false
             }
-            .disabled(hasActivePomodoro)
+            .disabled(markDone != .allowed)
         }
         .controlSize(.small)
         .padding(6)
@@ -433,7 +432,7 @@ struct AddTaskView: View {
                 PomodoroHistory(pomodoros: [], estimate: estimate, isPast: false)
                     .fixedSize()
                     .accessibilityHidden(true)
-                Stepper("Estimate", value: $estimate, in: 1...20)
+                Stepper("Estimate", value: $estimate, in: estimateRange)
                     .labelsHidden()
                     .controlSize(.mini)
                     .accessibilityValue("\(estimate) Pomodoros")
@@ -451,9 +450,9 @@ struct AddTaskView: View {
     }
 
     private func add() {
-        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return }
-        model.perform(at: .addTask) { logbook, now in try logbook.addTask(name: trimmed, estimate: estimate, now: now) }
+        // Add is disabled for an empty name anyway; the Logbook trims it and refuses a blank one.
+        guard !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+        model.perform(at: .addTask) { logbook, now in try logbook.addTask(name: name, estimate: estimate, now: now) }
         name = ""
         estimate = 1
     }

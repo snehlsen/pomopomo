@@ -16,6 +16,7 @@ public enum PomopomoError: Error, Equatable {
     case noBreakDue
     case noRunningBreak
     case invalidSettings
+    case dayIsPast
 }
 
 /// Something that happened as time passed, which the app should tell you about.
@@ -96,23 +97,38 @@ public struct Logbook: Codable, Equatable, Sendable {
         return SetProgress(number: total / size + 1, completed: total % size, size: size, completedToday: total)
     }
 
-    /// The Marks a Pomodoro started on the Task at `now` would carry, so you can know before starting it.
-    public func marksIfStarted(on taskID: Task.ID, now: Date) -> Set<Mark> {
-        let day = today(now: now)
-        var marks: Set<Mark> = []
-        if let task = day.task(taskID), day.completedCount(of: taskID) >= task.estimate {
-            marks.insert(.overrun)
+    /// What can be done to the Task at `now`, on whichever Day it is. Past Days are read-only, and Done is final.
+    /// The commands refuse with the same reasons, so you can know before trying.
+    public func options(for taskID: Task.ID, now: Date) -> TaskOptions {
+        guard let day = days.first(where: { $0.task(taskID) != nil }), let task = day.task(taskID) else {
+            return TaskOptions(refusingAllWith: .noSuchTask)
         }
-        if isSkippingBreak(on: day.date) {
-            marks.insert(.skippedBreak)
+        guard day.date >= openDate(now: now) else { return TaskOptions(refusingAllWith: .dayIsPast) }
+        guard !task.isDone else { return TaskOptions(refusingAllWith: .taskIsDone) }
+
+        let active = activePomodoro(now: now)
+        let start: StartOutcome = switch active?.state {
+        case .running?: .refused(.pomodoroAlreadyRunning)
+        case .paused? where active?.taskID == taskID: .resume
+        case .paused?: .voidAndStart(marks: marksIfStarted(on: taskID, now: now))
+        default: .start(marks: marksIfStarted(on: taskID, now: now))
         }
-        return marks
+        // From the first Pomodoro on, even one later Voided, the Estimate and name are locked.
+        let started = day.hasStartedPomodoro(on: taskID)
+        return TaskOptions(
+            start: start,
+            changeEstimate: started ? .refused(.estimateLocked) : .allowed,
+            rename: started ? .refused(.nameLocked) : .allowed,
+            delete: started ? .refused(.taskHasPomodoros) : .allowed,
+            markDone: active?.taskID == taskID ? .refused(.taskHasUnfinishedPomodoro) : .allowed
+        )
     }
 
     // MARK: Tasks
 
     @discardableResult
     public mutating func addTask(name: String, estimate: Int, now: Date) throws -> Task.ID {
+        let name = try Self.validName(name)
         guard estimate >= 1 else { throw PomopomoError.invalidEstimate }
         advance(to: now)
         let task = Task(id: UUID(), name: name, estimate: estimate)
@@ -123,39 +139,30 @@ public struct Logbook: Codable, Equatable, Sendable {
     /// Changes a Task's Estimate, which is only allowed until the first Pomodoro on it starts.
     public mutating func changeEstimate(of taskID: Task.ID, to estimate: Int, now: Date) throws {
         guard estimate >= 1 else { throw PomopomoError.invalidEstimate }
-        let locked = today(now: now).hasStartedPomodoro(on: taskID)
-        try updateTask(taskID, now: now) { task in
-            guard !locked else { throw PomopomoError.estimateLocked }
-            task.estimate = estimate
-        }
+        advance(to: now)
+        try options(for: taskID, now: now).changeEstimate.check()
+        try updateTask(taskID, now: now) { $0.estimate = estimate }
     }
 
     /// Renames a Task, which is only allowed until the first Pomodoro on it starts, like changing its Estimate.
     public mutating func renameTask(_ taskID: Task.ID, to name: String, now: Date) throws {
-        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { throw PomopomoError.invalidName }
-        let locked = today(now: now).hasStartedPomodoro(on: taskID)
-        try updateTask(taskID, now: now) { task in
-            guard !locked else { throw PomopomoError.nameLocked }
-            task.name = trimmed
-        }
+        let name = try Self.validName(name)
+        advance(to: now)
+        try options(for: taskID, now: now).rename.check()
+        try updateTask(taskID, now: now) { $0.name = name }
     }
 
     /// Marks the Task finished. Done is final, so it isn't allowed while a Pomodoro on the Task is Running or Paused.
     public mutating func markDone(_ taskID: Task.ID, now: Date) throws {
-        let unfinished = activePomodoro(now: now)?.taskID == taskID
-        try updateTask(taskID, now: now) { task in
-            guard !unfinished else { throw PomopomoError.taskHasUnfinishedPomodoro }
-            task.isDone = true
-        }
+        advance(to: now)
+        try options(for: taskID, now: now).markDone.check()
+        try updateTask(taskID, now: now) { $0.isDone = true }
     }
 
     /// Removes a Task, which is only allowed until the first Pomodoro on it starts.
     public mutating func deleteTask(_ taskID: Task.ID, now: Date) throws {
         advance(to: now)
-        let day = today(now: now)
-        guard day.task(taskID) != nil else { throw PomopomoError.noSuchTask }
-        guard !day.hasStartedPomodoro(on: taskID) else { throw PomopomoError.taskHasPomodoros }
+        try options(for: taskID, now: now).delete.check()
         updateToday(now: now) { day in day.tasks.removeAll { $0.id == taskID } }
     }
 
@@ -164,12 +171,10 @@ public struct Logbook: Codable, Equatable, Sendable {
     /// Starts a Pomodoro on one of today's Tasks. A Paused Pomodoro is Voided to make way for it.
     public mutating func startPomodoro(on taskID: Task.ID, now: Date) throws {
         advance(to: now)
-        guard let task = today(now: now).task(taskID) else { throw PomopomoError.noSuchTask }
-        guard !task.isDone else { throw PomopomoError.taskIsDone }
-        switch activePomodoro(now: now)?.state {
-        case .running: throw PomopomoError.pomodoroAlreadyRunning
-        case .paused: try voidPomodoro(now: now)
-        default: break
+        if case .refused(let reason) = options(for: taskID, now: now).start { throw reason }
+        // Starting over on the Task whose Pomodoro is Paused Voids it too; `resumePomodoro` picks it up instead.
+        if activePomodoro(now: now) != nil {
+            try voidPomodoro(now: now)
         }
 
         let length = settings.pomodoroLength
@@ -263,6 +268,26 @@ public struct Logbook: Codable, Equatable, Sendable {
     }
 
     // MARK: Helpers
+
+    /// The Marks a Pomodoro started on the Task at `now` would carry.
+    private func marksIfStarted(on taskID: Task.ID, now: Date) -> Set<Mark> {
+        let day = today(now: now)
+        var marks: Set<Mark> = []
+        if let task = day.task(taskID), day.completedCount(of: taskID) >= task.estimate {
+            marks.insert(.overrun)
+        }
+        if isSkippingBreak(on: day.date) {
+            marks.insert(.skippedBreak)
+        }
+        return marks
+    }
+
+    /// A Task's name without surrounding whitespace, which mustn't leave it empty.
+    private static func validName(_ name: String) throws -> String {
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { throw PomopomoError.invalidName }
+        return trimmed
+    }
 
     private func openDate(now: Date) -> DayDate {
         let carriedOver = days.first { day in

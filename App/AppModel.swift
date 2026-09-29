@@ -82,8 +82,8 @@ final class AppModel {
 
     var setProgress: SetProgress { logbook.setProgress(now: now) }
 
-    func marksIfStarted(on taskID: PomopomoCore.Task.ID) -> Set<Mark> {
-        logbook.marksIfStarted(on: taskID, now: now)
+    func options(for taskID: PomopomoCore.Task.ID) -> TaskOptions {
+        logbook.options(for: taskID, now: now)
     }
 
     var isPomodoroRunning: Bool {
@@ -362,6 +362,7 @@ extension PomopomoError {
         case .noBreakDue: "No Break is due."
         case .noRunningBreak: "No Break is running."
         case .invalidSettings: "Lengths and the Set size must be at least 1."
+        case .dayIsPast: "A past Day can't be changed."
         }
     }
 }

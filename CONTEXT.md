@@ -39,7 +39,7 @@ The number of Pomodoros you expect a Task to take, set when you add the Task. Yo
 _Avoid_: Budget, quota, target, allocation
 
 **Done**:
-A Task you have marked as finished yourself. Done is final: no more Pomodoros can be started on a Done Task, so extra work goes into a new Task. A Task never becomes Done on its own, whether it used fewer Pomodoros than its Estimate or more.
+A Task you have marked as finished yourself. Done is final: no more Pomodoros can be started on a Done Task, so extra work goes into a new Task. A Done Task can't be renamed, re-estimated or deleted either, even if no Pomodoro on it ever started. A Task never becomes Done on its own, whether it used fewer Pomodoros than its Estimate or more.
 _Avoid_: Completed (that word is for Pomodoros), closed, resolved
 
 ### Pomodoro states

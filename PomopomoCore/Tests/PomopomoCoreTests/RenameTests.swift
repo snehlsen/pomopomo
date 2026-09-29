@@ -30,7 +30,7 @@ import Testing
     }
 
     @Test mutating func taskOnAPastDayCannotBeRenamed() throws {
-        #expect(throws: PomopomoError.noSuchTask) { try logbook.renameTask(task, to: "Write report", now: sept29(9)) }
+        #expect(throws: PomopomoError.dayIsPast) { try logbook.renameTask(task, to: "Write report", now: sept29(9)) }
         #expect(logbook.day(on: sept28Date).task(task)?.name == "Wirte report")
     }
 }
