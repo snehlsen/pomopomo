@@ -4,7 +4,7 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** todo
+**Status:** done
 
 - [ ] A past Day shows how many Pomodoros were Completed and Voided.
 - [ ] It shows how many Marks were given, ideally split by kind.

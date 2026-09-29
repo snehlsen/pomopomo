@@ -10,6 +10,9 @@ struct MenuView: View {
         VStack(alignment: .leading, spacing: 12) {
             header
             if model.isShowingPastDay {
+                if !model.shownDay.tasks.isEmpty {
+                    DaySummaryView(summary: model.shownDay.summary)
+                }
                 TaskListView(model: model, day: model.shownDay, isPast: true)
             } else {
                 SetProgressView(progress: model.setProgress)
