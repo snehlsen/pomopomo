@@ -21,8 +21,12 @@ public enum PomopomoError: Error, Equatable {
 
 /// Something that happened as time passed, which the app should tell you about.
 public enum Event: Equatable, Sendable {
-    case pomodoroCompleted
-    case breakEnded
+    /// A Pomodoro on the Task was Completed. `breakDue` is the Break now offered, or nil if the
+    /// Pomodoro's Day has ended, since a Break never carries over into a new Day.
+    case pomodoroCompleted(task: Task, breakDue: Break.Kind?)
+    /// A Break was over, after a Pomodoro on this Task. The Task is as it is now, so it may be Done,
+    /// or on a Day that has ended.
+    case breakEnded(after: Task)
 }
 
 /// Every Day you have worked, and the rules for changing them.
@@ -253,16 +257,23 @@ public struct Logbook: Codable, Equatable, Sendable {
         var events: [Event] = []
         for dayIndex in days.indices {
             for pomodoroIndex in days[dayIndex].pomodoros.indices {
-                if case .running(let endsAt) = days[dayIndex].pomodoros[pomodoroIndex].state, endsAt <= now {
+                let pomodoro = days[dayIndex].pomodoros[pomodoroIndex]
+                if case .running(let endsAt) = pomodoro.state, endsAt <= now {
                     days[dayIndex].pomodoros[pomodoroIndex].state = .completed(at: endsAt)
                     breakStatus = .due(on: days[dayIndex].date)
-                    events.append(.pomodoroCompleted)
+                    if let task = days[dayIndex].task(pomodoro.taskID) {
+                        events.append(.pomodoroCompleted(task: task, breakDue: dueBreak(now: now)))
+                    }
                 }
             }
         }
-        if case .running(let running, _) = breakStatus, running.endsAt <= now {
+        if case .running(let running, let date) = breakStatus, running.endsAt <= now {
             breakStatus = nil
-            events.append(.breakEnded)
+            // Starting a Pomodoro ends a Break, so the Break followed its Day's last Completed Pomodoro.
+            let day = day(on: date)
+            if let task = day.pomodoros.last(where: \.isCompleted).flatMap({ day.task($0.taskID) }) {
+                events.append(.breakEnded(after: task))
+            }
         }
         return events
     }

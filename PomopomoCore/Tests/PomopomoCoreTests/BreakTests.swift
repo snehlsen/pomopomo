@@ -6,6 +6,8 @@ import Testing
     var logbook = newLogbook()
     let task: PomopomoCore.Task.ID
 
+    var writeReport: PomopomoCore.Task { logbook.task(task)! }
+
     init() throws {
         task = try logbook.addTask(name: "Write report", estimate: 8, now: sept28(9))
     }
@@ -30,7 +32,7 @@ import Testing
         #expect(logbook.dueBreak(now: sept28(9, 26)) == nil)
         #expect(logbook.runningBreak(now: sept28(9, 26)) == Break(kind: .short, length: 5 * minute, endsAt: sept28(9, 31)))
         #expect(logbook.advance(to: sept28(9, 30)) == [])
-        #expect(logbook.advance(to: sept28(9, 31)) == [.breakEnded])
+        #expect(logbook.advance(to: sept28(9, 31)) == [.breakEnded(after: writeReport)])
         #expect(logbook.runningBreak(now: sept28(9, 31)) == nil)
         #expect(logbook.dueBreak(now: sept28(9, 31)) == nil)
     }
@@ -75,6 +77,6 @@ import Testing
         try complete(task, at: sept28(9))
         try logbook.startBreak(now: sept28(9, 25))
         // No ticks at all while the Mac sleeps: the Break is still over when it wakes.
-        #expect(logbook.advance(to: sept28(12)) == [.breakEnded])
+        #expect(logbook.advance(to: sept28(12)) == [.breakEnded(after: writeReport)])
     }
 }

@@ -6,6 +6,8 @@ import Testing
     var logbook = newLogbook()
     let task: PomopomoCore.Task.ID
 
+    var writeReport: PomopomoCore.Task { logbook.task(task)! }
+
     init() throws {
         task = try logbook.addTask(name: "Write report", estimate: 2, now: sept28(9))
         try logbook.startPomodoro(on: task, now: sept28(9))
@@ -29,7 +31,7 @@ import Testing
         try logbook.resumePomodoro(now: sept28(10))
 
         #expect(logbook.advance(to: sept28(10, 4)) == [])
-        #expect(logbook.advance(to: sept28(10, 5)) == [.pomodoroCompleted])
+        #expect(logbook.advance(to: sept28(10, 5)) == [.pomodoroCompleted(task: writeReport, breakDue: .short)])
         #expect(logbook.today(now: sept28(10, 5)).pomodoros.map(\.state) == [.completed(at: sept28(10, 5))])
     }
 

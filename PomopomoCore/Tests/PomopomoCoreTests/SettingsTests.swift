@@ -6,6 +6,8 @@ import Testing
     var logbook = newLogbook()
     let task: PomopomoCore.Task.ID
 
+    var writeReport: PomopomoCore.Task { logbook.task(task)! }
+
     init() throws {
         task = try logbook.addTask(name: "Write report", estimate: 8, now: sept28(9))
     }
@@ -26,7 +28,7 @@ import Testing
     @Test mutating func runningPomodoroKeepsItsLengthAndTheNextUsesTheNewOne() throws {
         try logbook.startPomodoro(on: task, now: sept28(9))
         try logbook.changeSettings(settings(pomodoro: 50))
-        #expect(logbook.advance(to: sept28(9, 25)) == [.pomodoroCompleted])
+        #expect(logbook.advance(to: sept28(9, 25)) == [.pomodoroCompleted(task: writeReport, breakDue: .short)])
 
         try logbook.startPomodoro(on: task, now: sept28(10))
         #expect(logbook.activePomodoro(now: sept28(10))?.state == .running(endsAt: sept28(10, 50)))
@@ -46,7 +48,7 @@ import Testing
         logbook.advance(to: sept28(9, 25))
         try logbook.startBreak(now: sept28(9, 25))
         try logbook.changeSettings(settings(short: 10))
-        #expect(logbook.advance(to: sept28(9, 30)) == [.breakEnded])
+        #expect(logbook.advance(to: sept28(9, 30)) == [.breakEnded(after: writeReport)])
 
         try logbook.startPomodoro(on: task, now: sept28(9, 30))
         logbook.advance(to: sept28(9, 55))

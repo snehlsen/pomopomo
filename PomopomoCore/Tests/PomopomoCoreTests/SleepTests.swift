@@ -6,6 +6,8 @@ import Testing
     var logbook = newLogbook()
     let task: PomopomoCore.Task.ID
 
+    var writeReport: PomopomoCore.Task { logbook.task(task)! }
+
     init() throws {
         task = try logbook.addTask(name: "Write report", estimate: 4, now: sept28(9))
     }
@@ -37,7 +39,7 @@ import Testing
         logbook.sleep(now: sept28(9, 27))
 
         #expect(logbook.runningBreak(now: sept28(9, 28))?.endsAt == sept28(9, 30))
-        #expect(logbook.advance(to: sept28(9, 30)) == [.breakEnded])
+        #expect(logbook.advance(to: sept28(9, 30)) == [.breakEnded(after: writeReport)])
     }
 
     @Test mutating func sleepLeavesAPausedPomodoroAlone() throws {
@@ -50,7 +52,7 @@ import Testing
     @Test mutating func pomodoroWhoseTimeWasUpBeforeSleepIsCompletedNotPaused() throws {
         try logbook.startPomodoro(on: task, now: sept28(9))
         // No tick happened between 9:25 and 9:30.
-        #expect(logbook.sleep(now: sept28(9, 30)) == [.pomodoroCompleted])
+        #expect(logbook.sleep(now: sept28(9, 30)) == [.pomodoroCompleted(task: writeReport, breakDue: .short)])
         #expect(logbook.today(now: sept28(9, 30)).pomodoros.map(\.state) == [.completed(at: sept28(9, 25))])
     }
 }

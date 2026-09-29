@@ -25,3 +25,10 @@ func sept29(_ hour: Int, _ minute: Int = 0) -> Date {
 
 let sept28Date = DayDate(year: 2026, month: 9, day: 28)
 let sept29Date = DayDate(year: 2026, month: 9, day: 29)
+
+extension Logbook {
+    /// The Task with this ID, on whichever Day it is.
+    func task(_ id: PomopomoCore.Task.ID) -> PomopomoCore.Task? {
+        days.lazy.compactMap { $0.task(id) }.first
+    }
+}

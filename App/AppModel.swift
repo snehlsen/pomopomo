@@ -170,25 +170,25 @@ final class AppModel {
     private func announce(_ event: Event) {
         let content = UNMutableNotificationContent()
         switch event {
-        case .pomodoroCompleted:
+        case .pomodoroCompleted(let task, let breakDue):
             content.title = "Pomodoro Completed"
-            let breakMessage = switch dueBreak {
+            let breakMessage = switch breakDue {
             case .long: "Time for a Long Break."
             case .short: "Time for a Short Break."
             case nil: "A new Day has begun."
             }
-            content.body = [lastCompletedTask?.name, breakMessage].compactMap { $0 }.joined(separator: " · ")
-            if dueBreak != nil {
+            content.body = "\(task.name) · \(breakMessage)"
+            if breakDue != nil {
                 content.categoryIdentifier = NotificationHandler.Category.breakDue
             }
-        case .breakEnded:
+        case .breakEnded(let task):
             content.title = "Break Over"
-            if let last = lastTaskToday, !last.isDone {
-                content.body = "Start the next Pomodoro on \(last.name) when you're ready."
+            if case .start = logbook.options(for: task.id, now: now).start {
+                content.body = "Start the next Pomodoro on \(task.name) when you're ready."
                 content.categoryIdentifier = NotificationHandler.Category.breakOver
-                content.userInfo = [NotificationHandler.taskIDKey: last.id.uuidString]
-            } else if let last = lastTaskToday {
-                content.body = "\(last.name) is Done. Start the next Pomodoro on another Task when you're ready."
+                content.userInfo = [NotificationHandler.taskIDKey: task.id.uuidString]
+            } else if task.isDone {
+                content.body = "\(task.name) is Done. Start the next Pomodoro on another Task when you're ready."
             } else {
                 content.body = "Start the next Pomodoro when you're ready."
             }
@@ -204,21 +204,6 @@ final class AppModel {
         UNUserNotificationCenter.current().add(request)
     }
 
-    /// The Task of the Pomodoro Completed last, which may be on the Day before if it ran past midnight.
-    private var lastCompletedTask: PomopomoCore.Task? {
-        for day in logbook.days.reversed() {
-            if let pomodoro = day.pomodoros.last(where: \.isCompleted) {
-                return day.task(pomodoro.taskID)
-            }
-        }
-        return nil
-    }
-
-    /// The Task of today's last Pomodoro, which a Break Over notification offers to continue.
-    private var lastTaskToday: PomopomoCore.Task? {
-        today.pomodoros.last.flatMap { today.task($0.taskID) }
-    }
-
     /// A button on a notification was pressed. If its action is no longer possible, a notification says why.
     func performNotificationAction(_ action: String, taskID: PomopomoCore.Task.ID?) {
         switch action {
@@ -226,12 +211,18 @@ final class AppModel {
             perform(at: .breaks) { logbook, now in try logbook.startBreak(now: now) }
         case NotificationHandler.Action.startPomodoro:
             guard let taskID else { return }
-            // Starting would Void a Paused Pomodoro, which only the popover warns about, so leave that choice there.
-            guard activePomodoro == nil else {
-                postCouldNotDo("A Pomodoro is already Running or Paused. Open Pomopomo to resume or Void it.")
+            now = Date()
+            switch logbook.options(for: taskID, now: now).start {
+            case .start:
+                startPomodoro(on: taskID)
+            case .voidAndStart, .resume:
+                // Starting would Void a Paused Pomodoro, which only the popover warns about, so leave that choice there.
+                postCouldNotDo("A Pomodoro is Paused. Open Pomopomo to resume or Void it.")
+                return
+            case .refused(let reason):
+                postCouldNotDo(reason.message)
                 return
             }
-            startPomodoro(on: taskID)
         default:
             return
         }
