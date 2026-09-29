@@ -130,15 +130,16 @@ struct MarkSymbol: View {
     private var symbol: String {
         switch mark {
         case .pause: "pause.fill"
-        case .overrun: "plus.square.fill"
+        case .overrun: "plus.circle.fill"
         case .skippedBreak: "cup.and.saucer.fill"
         }
     }
 
+    /// Marks are only information, so none is red: red is kept for destructive actions and errors.
     private var color: Color {
         switch mark {
-        case .pause: .orange
-        case .overrun: .red
+        case .pause: .blue
+        case .overrun: .orange
         case .skippedBreak: .purple
         }
     }
