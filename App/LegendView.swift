@@ -14,6 +14,9 @@ struct LegendView: View {
                 row(PomodoroStateSymbol(look: .voided), "Voided", "Abandoned before its full length was done. Counts toward nothing.")
                 row(EstimateDivider(), "Beyond the Estimate", "Pomodoros after the divider went beyond the Task's Estimate.")
             }
+            section("Sets") {
+                row(SetCircles(completed: 2, size: 4), "Set progress", "One circle per Pomodoro in a Set, filled as Pomodoros are Completed today. When the Set is full, a Long Break is due. Voided and Paused Pomodoros don't count.", symbolWidth: 40)
+            }
             section("Marks") {
                 row(MarkSymbol(mark: .pause), Mark.pause.title, "Paused at least once before it was Completed.")
                 row(MarkSymbol(mark: .overrun), Mark.overrun.title, "Went beyond its Task's Estimate.")
@@ -40,10 +43,10 @@ struct LegendView: View {
         }
     }
 
-    private func row(_ symbol: some View, _ name: String, _ meaning: String) -> some View {
+    private func row(_ symbol: some View, _ name: String, _ meaning: String, symbolWidth: CGFloat = 16) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: 8) {
             symbol
-                .frame(width: 16)
+                .frame(width: symbolWidth)
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 1) {
                 Text(name).bold()

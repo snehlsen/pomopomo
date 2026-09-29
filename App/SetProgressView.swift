@@ -7,23 +7,39 @@ struct SetProgressView: View {
 
     var body: some View {
         HStack(spacing: 6) {
-            HStack(spacing: 3) {
-                ForEach(0..<progress.size, id: \.self) { index in
-                    if index < progress.completed {
-                        Circle().fill(.green)
-                    } else {
-                        Circle().strokeBorder(.secondary, lineWidth: 1)
-                    }
-                }
-                .frame(width: 7, height: 7)
-            }
+            SetCircles(completed: progress.completed, size: progress.size)
             Text("Set \(progress.number) · \(progress.completedToday) Completed today")
         }
         .font(.caption)
         .foregroundStyle(.secondary)
+        .help(explanation)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(
-            "Set \(progress.number): \(progress.completed) of \(progress.size) Completed. \(progress.completedToday) Completed today."
-        )
+        .accessibilityLabel("\(explanation) \(progress.completedToday) Completed today.")
+    }
+
+    private var explanation: String {
+        let count = "Set \(progress.number): \(progress.completed) of \(progress.size) Pomodoros Completed."
+        return progress.completed == progress.size
+            ? "\(count) The Set is full, so a Long Break is due."
+            : "\(count) A Long Break is due once all \(progress.size) are Completed."
+    }
+}
+
+/// One circle per Pomodoro in a Set, filled as Pomodoros are Completed. Shared with the key.
+struct SetCircles: View {
+    let completed: Int
+    let size: Int
+
+    var body: some View {
+        HStack(spacing: 3) {
+            ForEach(0..<size, id: \.self) { index in
+                if index < completed {
+                    Circle().fill(.green)
+                } else {
+                    Circle().strokeBorder(.secondary, lineWidth: 1)
+                }
+            }
+            .frame(width: 7, height: 7)
+        }
     }
 }
