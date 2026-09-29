@@ -4,7 +4,7 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** todo
+**Status:** done
 
 - [ ] The Pomodoro card and the Break card use the same alignment, padding and layout.
 - [ ] Both show progress through their length as a ring or bar.
