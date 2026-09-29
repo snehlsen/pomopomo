@@ -1,0 +1,25 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: brew install xcodegen
+      - run: make test
+      - name: Build the app with the tag's version
+        run: make app XCODEBUILD_FLAGS="MARKETING_VERSION=${GITHUB_REF_NAME#v} CURRENT_PROJECT_VERSION=${{ github.run_number }}"
+      - name: Zip it
+        # ditto keeps the bundle's symlinks and extended attributes, which zip would lose.
+        run: ditto -c -k --keepParent build/Build/Products/Release/Pomopomo.app "Pomopomo-${GITHUB_REF_NAME}.zip"
+      - name: Publish the Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" "Pomopomo-${GITHUB_REF_NAME}.zip" --generate-notes

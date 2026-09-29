@@ -17,6 +17,8 @@ targets:
       path: App/Info.plist
       properties:
         CFBundleDisplayName: Pomopomo
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         LSUIElement: true
     settings:
       base:

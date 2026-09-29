@@ -9,7 +9,7 @@ project:
 	xcodegen generate
 
 app: project
-	xcodebuild -project Pomopomo.xcodeproj -scheme Pomopomo -configuration Release -derivedDataPath build build
+	xcodebuild -project Pomopomo.xcodeproj -scheme Pomopomo -configuration Release -derivedDataPath build build $(XCODEBUILD_FLAGS)
 	@# xcodebuild leaves the bundle's own date alone, and macOS keys its icon cache on it.
 	touch build/Build/Products/Release/Pomopomo.app
 	/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -f build/Build/Products/Release/Pomopomo.app
