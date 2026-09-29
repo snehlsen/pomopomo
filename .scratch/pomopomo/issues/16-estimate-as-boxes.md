@@ -4,7 +4,7 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** todo
+**Status:** done
 
 - [ ] Each Task shows one slot per Pomodoro in its Estimate.
 - [ ] Completed Pomodoros fill slots in order. Voided and Paused Pomodoros are still visible but clearly don't fill a slot.

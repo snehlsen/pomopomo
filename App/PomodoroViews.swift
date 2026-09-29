@@ -1,22 +1,73 @@
 import PomopomoCore
 import SwiftUI
 
-/// A Task's Pomodoros in the order they started, each with its state and Marks.
+/// A Task's Estimate as one slot per estimated Pomodoro, ticked off like Cirillo's paper sheet.
+///
+/// Pomodoros appear in the order they started. Completed ones fill the slots; Voided, Paused and
+/// Running ones show between them without filling one. Pomodoros beyond the Estimate follow a divider.
 struct PomodoroHistory: View {
     let pomodoros: [Pomodoro]
+    let estimate: Int
     let isPast: Bool
 
     var body: some View {
-        if !pomodoros.isEmpty {
-            HStack(spacing: 6) {
-                ForEach(pomodoros) { pomodoro in
+        HStack(spacing: 5) {
+            ForEach(items) { item in
+                switch item {
+                case .pomodoro(let pomodoro):
                     PomodoroChip(pomodoro: pomodoro, isPast: isPast)
+                case .emptySlot:
+                    EmptySlot()
+                case .divider:
+                    Rectangle()
+                        .fill(.secondary)
+                        .frame(width: 1, height: 12)
+                        .help("Beyond the Estimate")
                 }
             }
         }
     }
+
+    private enum Item: Identifiable {
+        case pomodoro(Pomodoro)
+        case emptySlot(Int)
+        case divider
+
+        var id: String {
+            switch self {
+            case .pomodoro(let pomodoro): pomodoro.id.uuidString
+            case .emptySlot(let index): "empty-\(index)"
+            case .divider: "divider"
+            }
+        }
+    }
+
+    private var items: [Item] {
+        // A Pomodoro gets its Overrun Mark when it starts beyond the Estimate, so the Mark splits the two groups.
+        let within = pomodoros.filter { !$0.marks.contains(.overrun) }
+        let beyond = pomodoros.filter { $0.marks.contains(.overrun) }
+        let filled = within.filter(\.isCompleted).count
+        var items = within.map(Item.pomodoro)
+        items += (0..<max(0, estimate - filled)).map(Item.emptySlot)
+        if !beyond.isEmpty {
+            items.append(.divider)
+            items += beyond.map(Item.pomodoro)
+        }
+        return items
+    }
 }
 
+/// A slot of the Estimate that no Completed Pomodoro has filled yet.
+struct EmptySlot: View {
+    var body: some View {
+        RoundedRectangle(cornerRadius: 3)
+            .strokeBorder(.secondary, lineWidth: 1)
+            .frame(width: 12, height: 12)
+            .help("Not yet Completed")
+    }
+}
+
+/// One Pomodoro with its Marks. A Completed one is a filled slot; the others are small symbols.
 struct PomodoroChip: View {
     let pomodoro: Pomodoro
     /// On a past Day a Paused Pomodoro is Paused for good.
@@ -24,8 +75,19 @@ struct PomodoroChip: View {
 
     var body: some View {
         HStack(spacing: 1) {
-            Image(systemName: stateSymbol)
-                .foregroundStyle(stateColor)
+            if pomodoro.isCompleted {
+                RoundedRectangle(cornerRadius: 3)
+                    .fill(.green)
+                    .frame(width: 12, height: 12)
+                    .overlay {
+                        Image(systemName: "checkmark")
+                            .font(.system(size: 8, weight: .bold))
+                            .foregroundStyle(.white)
+                    }
+            } else {
+                Image(systemName: stateSymbol)
+                    .foregroundStyle(.secondary)
+            }
             ForEach(Mark.allCases.filter(pomodoro.marks.contains), id: \.self) { mark in
                 MarkSymbol(mark: mark)
             }
@@ -40,14 +102,6 @@ struct PomodoroChip: View {
         case .paused: isPast ? "pause.circle.fill" : "pause.circle"
         case .completed: "checkmark.circle.fill"
         case .voided: "xmark.circle"
-        }
-    }
-
-    private var stateColor: Color {
-        switch pomodoro.state {
-        case .running, .paused: .secondary
-        case .completed: .green
-        case .voided: .secondary
         }
     }
 

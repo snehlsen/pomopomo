@@ -220,8 +220,8 @@ struct TaskRow: View {
                             .foregroundStyle(task.isDone ? .secondary : .primary)
                             .onTapGesture(count: 2) { if canRename { startRenaming() } }
                     }
-                    HStack(spacing: 4) {
-                        Text("\(day.completedCount(of: task.id)) of \(task.estimate) Pomodoros")
+                    HStack(spacing: 6) {
+                        PomodoroHistory(pomodoros: day.pomodoros(on: task.id), estimate: task.estimate, isPast: isPast)
                         if !isPast && !day.hasStartedPomodoro(on: task.id) && !task.isDone {
                             Stepper("Estimate", value: estimate, in: 1...20)
                                 .labelsHidden()
@@ -236,7 +236,6 @@ struct TaskRow: View {
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
-                    PomodoroHistory(pomodoros: day.pomodoros(on: task.id), isPast: isPast)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 if task.isDone {
