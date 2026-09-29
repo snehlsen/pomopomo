@@ -9,6 +9,7 @@ public enum PomopomoError: Error, Equatable {
     case noUnfinishedPomodoro
     case estimateLocked
     case taskIsDone
+    case taskHasUnfinishedPomodoro
     case taskHasPomodoros
     case noBreakDue
     case noRunningBreak
@@ -102,9 +103,13 @@ public struct Logbook: Codable, Equatable, Sendable {
         }
     }
 
-    /// Marks the Task finished. Done is final.
+    /// Marks the Task finished. Done is final, so it isn't allowed while a Pomodoro on the Task is Running or Paused.
     public mutating func markDone(_ taskID: Task.ID, now: Date) throws {
-        try updateTask(taskID, now: now) { $0.isDone = true }
+        let unfinished = activePomodoro(now: now)?.taskID == taskID
+        try updateTask(taskID, now: now) { task in
+            guard !unfinished else { throw PomopomoError.taskHasUnfinishedPomodoro }
+            task.isDone = true
+        }
     }
 
     /// Removes a Task, which is only allowed until the first Pomodoro on it starts.

@@ -42,6 +42,25 @@ import Testing
         #expect(today.task(task)?.isDone == false)
     }
 
+    @Test mutating func taskCannotBeMarkedDoneWhileItsPomodoroIsRunningOrPaused() throws {
+        try logbook.startPomodoro(on: task, now: sept28(9))
+        #expect(throws: PomopomoError.taskHasUnfinishedPomodoro) { try logbook.markDone(task, now: sept28(9, 5)) }
+        try logbook.pausePomodoro(now: sept28(9, 10))
+        #expect(throws: PomopomoError.taskHasUnfinishedPomodoro) { try logbook.markDone(task, now: sept28(9, 15)) }
+        #expect(today.task(task)?.isDone == false)
+
+        try logbook.voidPomodoro(now: sept28(9, 20))
+        try logbook.markDone(task, now: sept28(9, 21))
+        #expect(today.task(task)?.isDone == true)
+    }
+
+    @Test mutating func taskCanBeMarkedDoneWhileAnotherTasksPomodoroIsRunning() throws {
+        let other = try logbook.addTask(name: "Email", estimate: 1, now: sept28(9))
+        try logbook.startPomodoro(on: other, now: sept28(9))
+        try logbook.markDone(task, now: sept28(9, 5))
+        #expect(today.task(task)?.isDone == true)
+    }
+
     @Test mutating func noPomodoroCanStartOnADoneTask() throws {
         try logbook.markDone(task, now: sept28(9))
         #expect(throws: PomopomoError.taskIsDone) { try logbook.startPomodoro(on: task, now: sept28(9, 1)) }

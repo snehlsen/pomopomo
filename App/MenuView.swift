@@ -165,47 +165,62 @@ struct TaskRow: View {
     let day: Day
     let task: PomopomoCore.Task
     let isPast: Bool
+    @State private var confirmingDone = false
 
     var body: some View {
-        HStack(alignment: .firstTextBaseline) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(task.name)
-                    .strikethrough(task.isDone)
-                    .foregroundStyle(task.isDone ? .secondary : .primary)
-                HStack(spacing: 4) {
-                    Text("\(day.completedCount(of: task.id)) of \(task.estimate) Pomodoros")
-                    if !isPast && !day.hasStartedPomodoro(on: task.id) && !task.isDone {
-                        Stepper("Estimate", value: estimate, in: 1...20)
-                            .labelsHidden()
-                            .controlSize(.mini)
-                            .help("Change the Estimate. It locks when the first Pomodoro starts.")
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(alignment: .firstTextBaseline) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(task.name)
+                        .strikethrough(task.isDone)
+                        .foregroundStyle(task.isDone ? .secondary : .primary)
+                    HStack(spacing: 4) {
+                        Text("\(day.completedCount(of: task.id)) of \(task.estimate) Pomodoros")
+                        if !isPast && !day.hasStartedPomodoro(on: task.id) && !task.isDone {
+                            Stepper("Estimate", value: estimate, in: 1...20)
+                                .labelsHidden()
+                                .controlSize(.mini)
+                                .help("Change the Estimate. It locks when the first Pomodoro starts.")
+                        }
                     }
-                }
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                PomodoroHistory(pomodoros: day.pomodoros(on: task.id), isPast: isPast)
-            }
-            Spacer()
-            if task.isDone {
-                Label("Done", systemImage: "checkmark.seal.fill")
-                    .labelStyle(.titleAndIcon)
                     .font(.caption)
-                    .foregroundStyle(.green)
-            } else if !isPast {
-                Button("Start") {
-                    model.startPomodoro(on: task.id)
+                    .foregroundStyle(.secondary)
+                    PomodoroHistory(pomodoros: day.pomodoros(on: task.id), isPast: isPast)
                 }
-                .disabled(model.isPomodoroRunning)
-                .help(model.activePomodoro?.isPaused == true ? "Starting a new Pomodoro voids the Paused one." : "")
-                actions
+                Spacer()
+                if task.isDone {
+                    Label("Done", systemImage: "checkmark.seal.fill")
+                        .labelStyle(.titleAndIcon)
+                        .font(.caption)
+                        .foregroundStyle(.green)
+                } else if !isPast {
+                    Button("Start") {
+                        model.startPomodoro(on: task.id)
+                    }
+                    .disabled(model.isPomodoroRunning)
+                    .help(model.activePomodoro?.isPaused == true ? "Starting a new Pomodoro voids the Paused one." : "")
+                    actions
+                }
+            }
+            if confirmingDone && !task.isDone {
+                doneConfirmation
             }
         }
     }
 
+    /// Whether this Task's Pomodoro is Running or Paused, which rules out marking it Done.
+    private var hasActivePomodoro: Bool {
+        model.activePomodoro?.taskID == task.id
+    }
+
     private var actions: some View {
         Menu {
-            Button("Mark Done") {
-                model.perform { logbook, now in try logbook.markDone(task.id, now: now) }
+            if hasActivePomodoro {
+                Button("Mark Done…") {}
+                    .disabled(true)
+                Text("Finish or Void its Pomodoro first")
+            } else {
+                Button("Mark Done…") { confirmingDone = true }
             }
             if !day.hasStartedPomodoro(on: task.id) {
                 Button("Delete Task", role: .destructive) {
@@ -218,7 +233,26 @@ struct TaskRow: View {
         .menuStyle(.borderlessButton)
         .menuIndicator(.hidden)
         .fixedSize()
-        .help("Mark Done is final: no more Pomodoros can start on a Done Task.")
+        .help("Task actions")
+    }
+
+    /// Done is final, so it takes a second, deliberate click.
+    private var doneConfirmation: some View {
+        HStack {
+            Text("Mark Done? No more Pomodoros can start on it.")
+                .font(.caption)
+                .fixedSize(horizontal: false, vertical: true)
+            Spacer()
+            Button("Cancel") { confirmingDone = false }
+            Button("Mark Done") {
+                model.perform { logbook, now in try logbook.markDone(task.id, now: now) }
+                confirmingDone = false
+            }
+            .disabled(hasActivePomodoro)
+        }
+        .controlSize(.small)
+        .padding(6)
+        .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 6))
     }
 
     private var estimate: Binding<Int> {

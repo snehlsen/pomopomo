@@ -4,7 +4,7 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** todo
+**Status:** done
 
 - [ ] Marking a Task Done asks for confirmation, or offers a short Undo, and says that no more Pomodoros can start on it.
 - [ ] Mark Done is unavailable while a Pomodoro on that Task is Running or Paused, with a visible reason.
