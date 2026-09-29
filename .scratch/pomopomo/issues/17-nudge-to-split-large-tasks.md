@@ -4,7 +4,7 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** todo
+**Status:** done
 
 - [ ] An Estimate above 5, when adding a Task or changing its Estimate, shows a visible hint to consider splitting the Task.
 - [ ] The hint doesn't block adding the Task.

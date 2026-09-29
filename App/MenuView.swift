@@ -232,6 +232,9 @@ struct TaskRow: View {
                     }
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                    if !isPast && !day.hasStartedPomodoro(on: task.id) && !task.isDone {
+                        SplitHint(estimate: task.estimate)
+                    }
                     if !isPast && !task.isDone && !hasActivePomodoro && nextMarks.contains(.overrun) {
                         Text("Estimate reached: the next one gets an Overrun Mark.")
                             .font(.caption)
@@ -407,16 +410,19 @@ struct AddTaskView: View {
     @State private var estimate = 1
 
     var body: some View {
-        HStack {
-            TextField("New Task", text: $name)
-                .onSubmit(add)
-            Stepper("Estimate \(estimate)", value: $estimate, in: 1...20)
-                .fixedSize()
-                .help("Estimate: how many Pomodoros you expect it to take")
-                .accessibilityLabel("Estimate")
-                .accessibilityValue("\(estimate) Pomodoros")
-            Button("Add", action: add)
-                .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty)
+        VStack(alignment: .leading, spacing: 4) {
+            HStack {
+                TextField("New Task", text: $name)
+                    .onSubmit(add)
+                Stepper("Estimate \(estimate)", value: $estimate, in: 1...20)
+                    .fixedSize()
+                    .help("Estimate: how many Pomodoros you expect it to take")
+                    .accessibilityLabel("Estimate")
+                    .accessibilityValue("\(estimate) Pomodoros")
+                Button("Add", action: add)
+                    .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty)
+            }
+            SplitHint(estimate: estimate)
         }
     }
 
@@ -426,5 +432,20 @@ struct AddTaskView: View {
         model.perform { logbook, now in try logbook.addTask(name: trimmed, estimate: estimate, now: now) }
         name = ""
         estimate = 1
+    }
+}
+
+/// The method says a Task of more than about 5–7 Pomodoros should be split. Large Estimates are
+/// still allowed; this only suggests it.
+struct SplitHint: View {
+    let estimate: Int
+
+    var body: some View {
+        if estimate > 5 {
+            Label("More than 5 Pomodoros? Consider splitting it into smaller Tasks.", systemImage: "lightbulb")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
     }
 }
