@@ -1,10 +1,12 @@
 import PomopomoCore
 import SwiftUI
+import UserNotifications
 
 /// The four adjustable settings. Lengths apply from the next Pomodoro or Break;
 /// the Set size applies to today's count straight away.
 struct SettingsView: View {
     let model: AppModel
+    @State private var notificationsDenied = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -20,7 +22,33 @@ struct SettingsView: View {
             Text("A Pomodoro or Break keeps the length it started with.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
+            if notificationsDenied {
+                notificationsOff
+            }
         }
+        .task { await refreshNotificationStatus() }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            _Concurrency.Task { await refreshNotificationStatus() }
+        }
+    }
+
+    private var notificationsOff: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Label("Notifications are off", systemImage: "bell.slash")
+                .font(.subheadline.bold())
+            Text("You'll only hear the sound when a Pomodoro or Break ends. Turn notifications on for Pomopomo in System Settings › Notifications.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            Button("Open Notification Settings") {
+                NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.Notifications-Settings.extension")!)
+            }
+        }
+    }
+
+    private func refreshNotificationStatus() async {
+        let settings = await UNUserNotificationCenter.current().notificationSettings()
+        notificationsDenied = settings.authorizationStatus == .denied
     }
 
     private func minutesStepper(

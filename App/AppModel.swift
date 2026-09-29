@@ -27,7 +27,6 @@ final class AppModel {
             MainActor.assumeIsolated { self?.tick() }
         }
         observeSleepAndWake()
-        UNUserNotificationCenter.current().requestAuthorization(options: [.alert]) { _, _ in }
         tick()
     }
 
@@ -91,6 +90,14 @@ final class AppModel {
             errorMessage = error.localizedDescription
         }
         save()
+    }
+
+    /// Starts a Pomodoro, and the first time one starts asks whether notifications may tell you it's over.
+    func startPomodoro(on taskID: PomopomoCore.Task.ID) {
+        perform { logbook, now in try logbook.startPomodoro(on: taskID, now: now) }
+        guard isPomodoroRunning else { return }
+        // Only asks if you haven't decided yet.
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert]) { _, _ in }
     }
 
     func remaining(of pomodoro: Pomodoro) -> TimeInterval {

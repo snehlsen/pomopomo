@@ -4,7 +4,7 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** todo
+**Status:** done
 
 - [ ] Launching the app doesn't ask for notification permission.
 - [ ] Starting the first Pomodoro asks for permission if it hasn't been decided yet.

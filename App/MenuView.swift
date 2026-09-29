@@ -193,7 +193,7 @@ struct TaskRow: View {
                     .foregroundStyle(.green)
             } else if !isPast {
                 Button("Start") {
-                    model.perform { logbook, now in try logbook.startPomodoro(on: task.id, now: now) }
+                    model.startPomodoro(on: task.id)
                 }
                 .disabled(model.isPomodoroRunning)
                 .help(model.activePomodoro?.isPaused == true ? "Starting a new Pomodoro voids the Paused one." : "")
