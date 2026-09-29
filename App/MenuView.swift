@@ -210,7 +210,8 @@ struct TaskListView: View {
             Text(isPast ? "No Tasks on this Day." : "No Tasks yet today.").foregroundStyle(.secondary)
         } else {
             VStack(alignment: .leading, spacing: 8) {
-                ForEach(day.tasks) { task in
+                // Open Tasks first, in the order they were added, then Done ones out of the way.
+                ForEach(day.tasks.filter { !$0.isDone } + day.tasks.filter(\.isDone)) { task in
                     TaskRow(model: model, day: day, task: task, isPast: isPast)
                 }
             }

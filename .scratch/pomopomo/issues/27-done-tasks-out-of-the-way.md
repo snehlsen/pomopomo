@@ -4,7 +4,7 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** todo
+**Status:** done
 
 - [ ] On today's list, Done Tasks appear after all open Tasks.
 - [ ] Open Tasks keep the order they were added in.
