@@ -4,7 +4,7 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** todo
+**Status:** done
 
 - [ ] Today's empty state explains how to add a Task, set its Estimate and start a Pomodoro.
 - [ ] A past Day's empty state stays short, since there's nothing to do there.

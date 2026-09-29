@@ -126,7 +126,11 @@ struct TaskListView: View {
 
     var body: some View {
         if day.tasks.isEmpty {
-            Text(isPast ? "No Tasks on this Day." : "No Tasks yet today.").foregroundStyle(.secondary)
+            if isPast {
+                Text("No Tasks on this Day.").foregroundStyle(.secondary)
+            } else {
+                firstRunHelp
+            }
         } else {
             VStack(alignment: .leading, spacing: 8) {
                 // Open Tasks first, in the order they were added, then Done ones out of the way.
@@ -135,6 +139,18 @@ struct TaskListView: View {
                 }
             }
         }
+    }
+
+    /// Today's empty list says how to get going.
+    private var firstRunHelp: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text("No Tasks yet today.")
+                .font(.subheadline.bold())
+            Text("Add a Task below with its Estimate: how many Pomodoros you expect it to take. Then press Start on it to begin a Pomodoro.")
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .font(.caption)
+        .foregroundStyle(.secondary)
     }
 }
 
