@@ -70,6 +70,8 @@ struct MenuView: View {
 struct ActivePomodoroView: View {
     let model: AppModel
     let pomodoro: Pomodoro
+    /// Voiding can't be undone, so it takes a second, deliberate click.
+    @State private var confirmingVoid = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -80,26 +82,48 @@ struct ActivePomodoroView: View {
                 .font(.system(size: 36, weight: .semibold, design: .rounded))
                 .monospacedDigit()
                 .foregroundStyle(pomodoro.isPaused ? .secondary : .primary)
-            HStack {
-                if pomodoro.isPaused {
-                    Button("Resume") {
-                        model.perform { logbook, now in try logbook.resumePomodoro(now: now) }
+            if confirmingVoid {
+                voidConfirmation
+            } else {
+                HStack {
+                    if pomodoro.isPaused {
+                        Button("Resume") {
+                            model.perform { logbook, now in try logbook.resumePomodoro(now: now) }
+                        }
+                        .keyboardShortcut(.defaultAction)
+                    } else {
+                        Button("Pause") {
+                            model.perform { logbook, now in try logbook.pausePomodoro(now: now) }
+                        }
                     }
-                    .keyboardShortcut(.defaultAction)
-                } else {
-                    Button("Pause") {
-                        model.perform { logbook, now in try logbook.pausePomodoro(now: now) }
-                    }
+                    Spacer().frame(width: 16)
+                    Button("Void…") { confirmingVoid = true }
+                        .help("Abandon this Pomodoro. It stays in the history but counts toward nothing.")
                 }
-                Button("Void", role: .destructive) {
-                    model.perform { logbook, now in try logbook.voidPomodoro(now: now) }
-                }
-                .help("Abandon this Pomodoro. It stays in the history but counts toward nothing.")
             }
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 6)
         .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 8))
+        .onChange(of: pomodoro.id) { confirmingVoid = false }
+    }
+
+    private var voidConfirmation: some View {
+        VStack(spacing: 4) {
+            Text("Void this Pomodoro? Its work won't count, and this can't be undone.")
+                .font(.caption)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+            HStack {
+                Button("Keep It") { confirmingVoid = false }
+                    .keyboardShortcut(.cancelAction)
+                Button("Void", role: .destructive) {
+                    model.perform { logbook, now in try logbook.voidPomodoro(now: now) }
+                    confirmingVoid = false
+                }
+            }
+        }
+        .padding(.horizontal)
     }
 }
 

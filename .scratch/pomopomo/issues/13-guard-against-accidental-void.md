@@ -4,7 +4,7 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** todo
+**Status:** done
 
 - [ ] A single mis-click next to Pause can't Void a Pomodoro without a chance to back out.
 - [ ] Voiding on purpose still takes at most two deliberate steps.
