@@ -254,6 +254,14 @@ struct TaskRow: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+        .background {
+            // Drawn outside the row's frame, so highlighting it doesn't move anything.
+            if hasActivePomodoro && !isPast {
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(Color.accentColor.opacity(0.12))
+                    .padding(-6)
+            }
+        }
     }
 
     /// Says what pressing it will do: resume this Task's Paused Pomodoro, void another Task's Paused one,
@@ -277,7 +285,10 @@ struct TaskRow: View {
                     }
                 }
             }
+            // While a Pomodoro Runs no Start can be used; hide it but keep its space so rows don't jump.
             .disabled(model.isPomodoroRunning)
+            .opacity(model.isPomodoroRunning ? 0 : 1)
+            .accessibilityHidden(model.isPomodoroRunning)
             .help(startHelp(voidsPaused: voidsPaused))
         }
     }

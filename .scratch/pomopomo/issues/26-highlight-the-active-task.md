@@ -4,7 +4,7 @@
 
 **Blocked by:** 12 (start button says what it does)
 
-**Status:** todo
+**Status:** done
 
 - [ ] The row of the Task with the Running or Paused Pomodoro is visibly highlighted.
 - [ ] While a Pomodoro is Running, the other rows don't show disabled Start buttons.
