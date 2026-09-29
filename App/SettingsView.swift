@@ -10,7 +10,6 @@ struct SettingsView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("Settings").font(.subheadline.bold())
             minutesStepper("Pomodoro", \.pomodoroLength, in: 1...90)
             minutesStepper("Short Break", \.shortBreakLength, in: 1...30)
             minutesStepper("Long Break", \.longBreakLength, in: 1...60)
@@ -26,6 +25,9 @@ struct SettingsView: View {
                 notificationsOff
             }
         }
+        .padding(20)
+        .frame(width: 360, alignment: .leading)
+        .fixedSize()
         .task { await refreshNotificationStatus() }
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
             _Concurrency.Task { await refreshNotificationStatus() }

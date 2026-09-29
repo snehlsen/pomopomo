@@ -4,7 +4,7 @@ import SwiftUI
 /// The window that opens from the menu bar.
 struct MenuView: View {
     let model: AppModel
-    @State private var showsSettings = false
+    @Environment(\.openSettings) private var openSettings
     @State private var showsLegend = false
 
     /// Keeps the popover on screen with many Tasks; the timer card, Add Task and the footer stay visible.
@@ -35,18 +35,15 @@ struct MenuView: View {
                 Text(message).font(.caption).foregroundStyle(.red)
             }
             Divider()
-            if showsSettings {
-                SettingsView(model: model)
-                Divider()
-            }
             HStack {
                 Button {
-                    showsSettings.toggle()
+                    showSettings()
                 } label: {
                     Image(systemName: "gearshape")
                 }
                 .buttonStyle(.borderless)
-                .help("Settings")
+                .keyboardShortcut(",")
+                .help("Settings (⌘,)")
                 .accessibilityLabel("Settings")
                 Button {
                     showsLegend.toggle()
@@ -66,6 +63,12 @@ struct MenuView: View {
         }
         .padding()
         .frame(width: 340)
+    }
+
+    /// Opens the Settings window in front: a menu-bar app isn't active on its own.
+    private func showSettings() {
+        NSApp.activate(ignoringOtherApps: true)
+        openSettings()
     }
 
     private var header: some View {

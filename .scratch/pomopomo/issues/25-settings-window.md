@@ -4,7 +4,7 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** todo
+**Status:** done
 
 - [ ] Settings open in their own window, from the gear button and with ⌘,.
 - [ ] Opening settings doesn't change the popover's size.
