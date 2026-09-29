@@ -5,6 +5,7 @@ import SwiftUI
 struct MenuView: View {
     let model: AppModel
     @State private var showsSettings = false
+    @State private var showsLegend = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -40,6 +41,17 @@ struct MenuView: View {
                 .buttonStyle(.borderless)
                 .help("Settings")
                 .accessibilityLabel("Settings")
+                Button {
+                    showsLegend.toggle()
+                } label: {
+                    Image(systemName: "questionmark.circle")
+                }
+                .buttonStyle(.borderless)
+                .help("What the symbols mean")
+                .accessibilityLabel("Key to the symbols")
+                .popover(isPresented: $showsLegend, arrowEdge: .bottom) {
+                    LegendView()
+                }
                 Spacer()
                 Button("Quit Pomopomo") { NSApplication.shared.terminate(nil) }
                     .keyboardShortcut("q")
@@ -432,6 +444,9 @@ struct AddTaskView: View {
                     .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty)
             }
             SplitHint(estimate: estimate)
+            Text("The Estimate and name lock when the Task's first Pomodoro starts.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
         }
     }
 

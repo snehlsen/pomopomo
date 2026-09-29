@@ -4,7 +4,7 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** todo
+**Status:** done
 
 - [ ] A "?" button opens a key showing each Pomodoro state symbol and each Mark symbol with its name and a one-line meaning, using the terms in CONTEXT.md.
 - [ ] Rules that lose work or can't be undone are stated in visible text where the action is, not only in tooltips.

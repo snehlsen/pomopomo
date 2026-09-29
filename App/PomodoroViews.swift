@@ -19,11 +19,7 @@ struct PomodoroHistory: View {
                 case .emptySlot:
                     EmptySlot()
                 case .divider:
-                    Rectangle()
-                        .fill(.secondary)
-                        .frame(width: 1, height: 12)
-                        .help("Beyond the Estimate")
-                        .accessibilityLabel("Beyond the Estimate")
+                    EstimateDivider()
                 }
             }
         }
@@ -58,6 +54,17 @@ struct PomodoroHistory: View {
     }
 }
 
+/// Separates the Pomodoros within the Estimate from those beyond it.
+struct EstimateDivider: View {
+    var body: some View {
+        Rectangle()
+            .fill(.secondary)
+            .frame(width: 1, height: 12)
+            .help("Beyond the Estimate")
+            .accessibilityLabel("Beyond the Estimate")
+    }
+}
+
 /// A slot of the Estimate that no Completed Pomodoro has filled yet.
 struct EmptySlot: View {
     var body: some View {
@@ -77,19 +84,7 @@ struct PomodoroChip: View {
 
     var body: some View {
         HStack(spacing: 1) {
-            if pomodoro.isCompleted {
-                RoundedRectangle(cornerRadius: 3)
-                    .fill(.green)
-                    .frame(width: 12, height: 12)
-                    .overlay {
-                        Image(systemName: "checkmark")
-                            .font(.system(size: 8, weight: .bold))
-                            .foregroundStyle(.white)
-                    }
-            } else {
-                Image(systemName: stateSymbol)
-                    .foregroundStyle(.secondary)
-            }
+            PomodoroStateSymbol(look: look)
             ForEach(Mark.allCases.filter(pomodoro.marks.contains), id: \.self) { mark in
                 MarkSymbol(mark: mark)
             }
@@ -100,24 +95,59 @@ struct PomodoroChip: View {
         .accessibilityLabel(description.joined(separator: ", "))
     }
 
-    private var stateSymbol: String {
+    private var look: PomodoroLook {
         switch pomodoro.state {
-        case .running: "circle.dotted"
-        case .paused: isPast ? "pause.circle.fill" : "pause.circle"
-        case .completed: "checkmark.circle.fill"
-        case .voided: "xmark.circle"
+        case .running: .running
+        case .paused: isPast ? .pausedForGood : .paused
+        case .completed: .completed
+        case .voided: .voided
         }
     }
 
     /// Its state and Marks in the words of the glossary, like ["Completed", "Pause Mark"].
     private var description: [String] {
-        let state = switch pomodoro.state {
-        case .running: "Running"
-        case .paused: isPast ? "Paused for good" : "Paused"
+        [look.title] + Mark.allCases.filter(pomodoro.marks.contains).map(\.title)
+    }
+}
+
+/// How a Pomodoro's state is shown, in the task list and in the key alike.
+enum PomodoroLook: CaseIterable {
+    case completed, running, paused, pausedForGood, voided
+
+    var title: String {
+        switch self {
         case .completed: "Completed"
+        case .running: "Running"
+        case .paused: "Paused"
+        case .pausedForGood: "Paused for good"
         case .voided: "Voided"
         }
-        return [state] + Mark.allCases.filter(pomodoro.marks.contains).map(\.title)
+    }
+}
+
+struct PomodoroStateSymbol: View {
+    let look: PomodoroLook
+
+    var body: some View {
+        switch look {
+        case .completed:
+            RoundedRectangle(cornerRadius: 3)
+                .fill(.green)
+                .frame(width: 12, height: 12)
+                .overlay {
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 8, weight: .bold))
+                        .foregroundStyle(.white)
+                }
+        case .running: symbol("circle.dotted")
+        case .paused: symbol("pause.circle")
+        case .pausedForGood: symbol("pause.circle.fill")
+        case .voided: symbol("xmark.circle")
+        }
+    }
+
+    private func symbol(_ name: String) -> some View {
+        Image(systemName: name).foregroundStyle(.secondary)
     }
 }
 
