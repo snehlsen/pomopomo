@@ -13,6 +13,12 @@ struct MenuView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             header
+            if let message = model.saveErrorMessage {
+                Label(message, systemImage: "exclamationmark.triangle.fill")
+                    .font(.caption)
+                    .foregroundStyle(.red)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
             if model.isShowingPastDay {
                 if !model.shownDay.tasks.isEmpty {
                     DaySummaryView(summary: model.shownDay.summary)
@@ -30,9 +36,6 @@ struct MenuView: View {
                     TaskListView(model: model, day: model.today, isPast: false)
                 }
                 AddTaskView(model: model)
-            }
-            if let message = model.errorMessage {
-                Text(message).font(.caption).foregroundStyle(.red)
             }
             Divider()
             footer
@@ -211,6 +214,7 @@ struct TaskRow: View {
             if confirmingDone && !task.isDone {
                 doneConfirmation
             }
+            ErrorText(model: model, place: .task(task.id))
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .background {
@@ -229,7 +233,7 @@ struct TaskRow: View {
     private var startButton: some View {
         if let active = model.activePomodoro, active.isPaused, active.taskID == task.id {
             Button("Resume") {
-                model.perform { logbook, now in try logbook.resumePomodoro(now: now) }
+                model.perform(at: .task(task.id)) { logbook, now in try logbook.resumePomodoro(now: now) }
             }
             .help("Resume this Task's Paused Pomodoro.")
         } else {
@@ -297,7 +301,7 @@ struct TaskRow: View {
         guard let name = draftName else { return }
         draftName = nil
         guard !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty, name != task.name else { return }
-        model.perform { logbook, now in try logbook.renameTask(task.id, to: name, now: now) }
+        model.perform(at: .task(task.id)) { logbook, now in try logbook.renameTask(task.id, to: name, now: now) }
     }
 
     /// Whether this Task's Pomodoro is Running or Paused, which rules out marking it Done.
@@ -319,7 +323,7 @@ struct TaskRow: View {
             }
             if !day.hasStartedPomodoro(on: task.id) {
                 Button("Delete Task", role: .destructive) {
-                    model.perform { logbook, now in try logbook.deleteTask(task.id, now: now) }
+                    model.perform(at: .task(task.id)) { logbook, now in try logbook.deleteTask(task.id, now: now) }
                 }
             }
         } label: {
@@ -341,7 +345,7 @@ struct TaskRow: View {
             Spacer()
             Button("Cancel") { confirmingDone = false }
             Button("Mark Done") {
-                model.perform { logbook, now in try logbook.markDone(task.id, now: now) }
+                model.perform(at: .task(task.id)) { logbook, now in try logbook.markDone(task.id, now: now) }
                 confirmingDone = false
             }
             .disabled(hasActivePomodoro)
@@ -355,7 +359,7 @@ struct TaskRow: View {
         Binding(
             get: { task.estimate },
             set: { newValue in
-                model.perform { logbook, now in try logbook.changeEstimate(of: task.id, to: newValue, now: now) }
+                model.perform(at: .task(task.id)) { logbook, now in try logbook.changeEstimate(of: task.id, to: newValue, now: now) }
             }
         )
     }
@@ -379,6 +383,7 @@ struct AddTaskView: View {
                 Button("Add", action: add)
                     .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty)
             }
+            ErrorText(model: model, place: .addTask)
             SplitHint(estimate: estimate)
             Text("The Estimate and name lock when the Task's first Pomodoro starts.")
                 .font(.caption)
@@ -389,7 +394,7 @@ struct AddTaskView: View {
     private func add() {
         let trimmed = name.trimmingCharacters(in: .whitespaces)
         guard !trimmed.isEmpty else { return }
-        model.perform { logbook, now in try logbook.addTask(name: trimmed, estimate: estimate, now: now) }
+        model.perform(at: .addTask) { logbook, now in try logbook.addTask(name: trimmed, estimate: estimate, now: now) }
         name = ""
         estimate = 1
     }

@@ -4,7 +4,7 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** todo
+**Status:** done
 
 - [ ] An error appears near the control that caused it.
 - [ ] Errors clear on their own after a few seconds or on the next interaction.

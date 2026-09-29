@@ -9,7 +9,10 @@ import UserNotifications
 final class AppModel {
     private(set) var logbook: Logbook
     private(set) var now = Date()
-    private(set) var errorMessage: String?
+    /// What went wrong last, and where, so it can show next to the control that caused it.
+    private(set) var error: PlacedError?
+    /// Saving has no single control, so this shows on its own until saving works again.
+    private(set) var saveErrorMessage: String?
 
     /// Whether a sound plays when a Pomodoro or Break ends. Stored on this Mac.
     var playsSound: Bool {
@@ -45,6 +48,9 @@ final class AppModel {
         notificationHandler.register()
         tick()
     }
+
+    /// How long an error stays next to its control.
+    private static let errorDuration: TimeInterval = 6
 
     var today: Day { logbook.today(now: now) }
 
@@ -86,6 +92,9 @@ final class AppModel {
 
     func tick() {
         now = Date()
+        if let error, now.timeIntervalSince(error.shownAt) >= Self.errorDuration {
+            self.error = nil
+        }
         let events = logbook.advance(to: now)
         guard !events.isEmpty else { return }
         save()
@@ -100,23 +109,29 @@ final class AppModel {
         events.forEach(announce)
     }
 
-    /// Runs a command on the Logbook at the current time, then saves.
-    func perform(_ command: (inout Logbook, Date) throws -> Void) {
+    /// Runs a command on the Logbook at the current time, then saves. If it fails, the message
+    /// shows at `place` until the next command or for a few seconds.
+    func perform(at place: ErrorPlace, _ command: (inout Logbook, Date) throws -> Void) {
         now = Date()
         do {
             try command(&logbook, now)
-            errorMessage = nil
-        } catch let error as PomopomoError {
-            errorMessage = error.message
-        } catch {
-            errorMessage = error.localizedDescription
+            error = nil
+        } catch let failure as PomopomoError {
+            error = PlacedError(place: place, message: failure.message, shownAt: now)
+        } catch let failure {
+            error = PlacedError(place: place, message: failure.localizedDescription, shownAt: now)
         }
         save()
     }
 
+    /// The message to show at `place`, if the last command failed there.
+    func errorMessage(at place: ErrorPlace) -> String? {
+        error?.place == place ? error?.message : nil
+    }
+
     /// Starts a Pomodoro, and the first time one starts asks whether notifications may tell you it's over.
     func startPomodoro(on taskID: PomopomoCore.Task.ID) {
-        perform { logbook, now in try logbook.startPomodoro(on: taskID, now: now) }
+        perform(at: .task(taskID)) { logbook, now in try logbook.startPomodoro(on: taskID, now: now) }
         guard isPomodoroRunning else { return }
         // Only asks if you haven't decided yet.
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert]) { _, _ in }
@@ -146,8 +161,9 @@ final class AppModel {
     private func save() {
         do {
             try store.save(logbook)
+            saveErrorMessage = nil
         } catch {
-            errorMessage = "Couldn't save: \(error.localizedDescription)"
+            saveErrorMessage = "Couldn't save: \(error.localizedDescription)"
         }
     }
 
@@ -206,17 +222,17 @@ final class AppModel {
     func performNotificationAction(_ action: String, taskID: PomopomoCore.Task.ID?) {
         switch action {
         case NotificationHandler.Action.startBreak:
-            perform { logbook, now in try logbook.startBreak(now: now) }
+            perform(at: .breaks) { logbook, now in try logbook.startBreak(now: now) }
         case NotificationHandler.Action.startPomodoro:
             guard let taskID else { return }
             startPomodoro(on: taskID)
         default:
             return
         }
-        if let errorMessage {
+        if let message = error?.message {
             let content = UNMutableNotificationContent()
             content.title = "Couldn't Do That"
-            content.body = errorMessage
+            content.body = message
             post(content)
         }
     }
@@ -301,6 +317,21 @@ enum MenuBarDisplay: String, CaseIterable, Identifiable {
         case .iconOnly: "Icon only"
         }
     }
+}
+
+/// Where a command was given from, so its error can show next to that control.
+enum ErrorPlace: Hashable {
+    case pomodoro
+    case breaks
+    case task(PomopomoCore.Task.ID)
+    case addTask
+    case settings
+}
+
+struct PlacedError {
+    let place: ErrorPlace
+    let message: String
+    let shownAt: Date
 }
 
 extension PomopomoError {

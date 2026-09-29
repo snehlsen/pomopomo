@@ -15,9 +15,10 @@ struct SettingsView: View {
             minutesStepper("Long Break", \.longBreakLength, in: 1...60)
             Stepper("Set: \(model.logbook.settings.setSize) Pomodoros", value: binding(\.setSize), in: 1...12)
             Button("Restore Default Values") {
-                model.perform { logbook, _ in try logbook.changeSettings(PomopomoCore.Settings()) }
+                model.perform(at: .settings) { logbook, _ in try logbook.changeSettings(PomopomoCore.Settings()) }
             }
             .disabled(model.logbook.settings == PomopomoCore.Settings())
+            ErrorText(model: model, place: .settings)
             Text("A Pomodoro or Break keeps the length it started with.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
@@ -79,7 +80,7 @@ struct SettingsView: View {
             set: { newValue in
                 var settings = model.logbook.settings
                 settings[keyPath: keyPath] = newValue
-                model.perform { logbook, _ in try logbook.changeSettings(settings) }
+                model.perform(at: .settings) { logbook, _ in try logbook.changeSettings(settings) }
             }
         )
     }

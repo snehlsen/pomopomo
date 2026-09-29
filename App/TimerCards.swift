@@ -86,12 +86,12 @@ struct ActivePomodoroView: View {
                 HStack {
                     if pomodoro.isPaused {
                         Button("Resume") {
-                            model.perform { logbook, now in try logbook.resumePomodoro(now: now) }
+                            model.perform(at: .pomodoro) { logbook, now in try logbook.resumePomodoro(now: now) }
                         }
                         .keyboardShortcut(.defaultAction)
                     } else {
                         Button("Pause") {
-                            model.perform { logbook, now in try logbook.pausePomodoro(now: now) }
+                            model.perform(at: .pomodoro) { logbook, now in try logbook.pausePomodoro(now: now) }
                         }
                     }
                     Spacer().frame(width: 16)
@@ -99,6 +99,7 @@ struct ActivePomodoroView: View {
                         .help("Abandon this Pomodoro. It stays in the history but counts toward nothing.")
                 }
             }
+            ErrorText(model: model, place: .pomodoro)
         }
         .onChange(of: pomodoro.id) { confirmingVoid = false }
     }
@@ -112,7 +113,7 @@ struct ActivePomodoroView: View {
                 Button("Keep It") { confirmingVoid = false }
                     .keyboardShortcut(.cancelAction)
                 Button("Void", role: .destructive) {
-                    model.perform { logbook, now in try logbook.voidPomodoro(now: now) }
+                    model.perform(at: .pomodoro) { logbook, now in try logbook.voidPomodoro(now: now) }
                     confirmingVoid = false
                 }
             }
@@ -132,12 +133,13 @@ struct BreakView: View {
                 tint: .teal
             ) {
                 Button("End Break Early") {
-                    model.perform { logbook, now in try logbook.endBreak(now: now) }
+                    model.perform(at: .breaks) { logbook, now in try logbook.endBreak(now: now) }
                 }
                 Text("Ending it early or starting a Pomodoro now gives that Pomodoro a Skipped-Break Mark.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
+                ErrorText(model: model, place: .breaks)
             }
         } else if let due = model.dueBreak {
             VStack(alignment: .leading, spacing: 2) {
@@ -146,7 +148,7 @@ struct BreakView: View {
                     Text("\(due.title) due")
                     Spacer()
                     Button("Start \(due.title)") {
-                        model.perform { logbook, now in try logbook.startBreak(now: now) }
+                        model.perform(at: .breaks) { logbook, now in try logbook.startBreak(now: now) }
                     }
                     .keyboardShortcut(.defaultAction)
                 }
@@ -154,6 +156,7 @@ struct BreakView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
+                ErrorText(model: model, place: .breaks)
             }
         }
     }
