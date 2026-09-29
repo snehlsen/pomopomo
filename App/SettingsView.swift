@@ -21,6 +21,14 @@ struct SettingsView: View {
             Text("A Pomodoro or Break keeps the length it started with.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
+            Divider()
+            Toggle("Play a sound when a Pomodoro or Break ends", isOn: Bindable(model).playsSound)
+            Picker("Menu bar shows", selection: Bindable(model).menuBarDisplay) {
+                ForEach(MenuBarDisplay.allCases) { display in
+                    Text(display.title).tag(display)
+                }
+            }
+            .fixedSize()
             if notificationsDenied {
                 notificationsOff
             }

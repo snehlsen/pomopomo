@@ -4,7 +4,7 @@
 
 **Blocked by:** 25 (settings window)
 
-**Status:** todo
+**Status:** done
 
 - [ ] The completion sound can be turned off. It's on by default.
 - [ ] The menu bar display can be set to minutes and seconds (default), minutes only, or icon only.

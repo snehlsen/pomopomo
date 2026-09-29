@@ -11,6 +11,16 @@ final class AppModel {
     private(set) var now = Date()
     private(set) var errorMessage: String?
 
+    /// Whether a sound plays when a Pomodoro or Break ends. Stored on this Mac.
+    var playsSound: Bool {
+        didSet { UserDefaults.standard.set(playsSound, forKey: "playsSound") }
+    }
+
+    /// How the menu bar shows the time left. Stored on this Mac.
+    var menuBarDisplay: MenuBarDisplay {
+        didSet { UserDefaults.standard.set(menuBarDisplay.rawValue, forKey: "menuBarDisplay") }
+    }
+
     @ObservationIgnored private let store: LogbookStore
     @ObservationIgnored private var timer: Timer?
     @ObservationIgnored private var activity: NSObjectProtocol?
@@ -18,6 +28,9 @@ final class AppModel {
     init(store: LogbookStore = .standard) {
         self.store = store
         logbook = Self.load(from: store)
+        playsSound = UserDefaults.standard.object(forKey: "playsSound") as? Bool ?? true
+        menuBarDisplay = UserDefaults.standard.string(forKey: "menuBarDisplay")
+            .flatMap(MenuBarDisplay.init(rawValue:)) ?? .minutesAndSeconds
         // Keep App Nap from delaying the countdown; the Mac may still sleep.
         activity = ProcessInfo.processInfo.beginActivity(
             options: .userInitiatedAllowingIdleSystemSleep,
@@ -151,7 +164,9 @@ final class AppModel {
         }
         let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil)
         UNUserNotificationCenter.current().add(request)
-        NSSound(named: "Glass")?.play()
+        if playsSound {
+            NSSound(named: "Glass")?.play()
+        }
     }
 
     /// Loads the stored Logbook. A file that can't be read is moved aside rather than overwritten.
@@ -163,6 +178,22 @@ final class AppModel {
                 .appendingPathExtension("unreadable-\(Int(Date().timeIntervalSince1970)).json")
             try? FileManager.default.moveItem(at: store.fileURL, to: backup)
             return Logbook()
+        }
+    }
+}
+
+/// How the menu bar shows the time left. The method discourages watching the clock,
+/// so it can show less than every second.
+enum MenuBarDisplay: String, CaseIterable, Identifiable {
+    case minutesAndSeconds, minutesOnly, iconOnly
+
+    var id: Self { self }
+
+    var title: String {
+        switch self {
+        case .minutesAndSeconds: "Minutes and seconds"
+        case .minutesOnly: "Minutes only"
+        case .iconOnly: "Icon only"
         }
     }
 }
