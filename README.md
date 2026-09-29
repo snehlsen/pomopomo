@@ -37,6 +37,14 @@ The lengths of a Pomodoro, a Short Break and a Long Break, the size of a Set, wh
 
 Everything stays on your Mac, in `~/Library/Application Support/Pomopomo/logbook.json`. There are no accounts and no syncing.
 
+## Install
+
+Download `Pomopomo-….zip` from the [latest Release](https://github.com/snehlsen/pomopomo/releases/latest), unzip it and drag Pomopomo into Applications. It needs macOS 14 or later and runs on Apple silicon and Intel Macs.
+
+The app isn't notarized by Apple, so macOS blocks it the first time you open it. Open System Settings → Privacy & Security, scroll down to the message about Pomopomo and click **Open Anyway**. You only need to do this once.
+
+Pomopomo lives in the menu bar and has no Dock icon.
+
 ## Building
 
 You need macOS 14 or later, Xcode, and [XcodeGen](https://github.com/yonaskolb/XcodeGen) (`brew install xcodegen`).

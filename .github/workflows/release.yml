@@ -14,8 +14,8 @@ jobs:
       - uses: actions/checkout@v4
       - run: brew install xcodegen
       - run: make test
-      - name: Build the app with the tag's version
-        run: make app XCODEBUILD_FLAGS="MARKETING_VERSION=${GITHUB_REF_NAME#v} CURRENT_PROJECT_VERSION=${{ github.run_number }}"
+      - name: Build a universal app with the tag's version
+        run: make app XCODEBUILD_FLAGS="MARKETING_VERSION=${GITHUB_REF_NAME#v} CURRENT_PROJECT_VERSION=${{ github.run_number }} ARCHS='arm64 x86_64' ONLY_ACTIVE_ARCH=NO"
       - name: Zip it
         # ditto keeps the bundle's symlinks and extended attributes, which zip would lose.
         run: ditto -c -k --keepParent build/Build/Products/Release/Pomopomo.app "Pomopomo-${GITHUB_REF_NAME}.zip"
