@@ -4,7 +4,7 @@
 
 **Blocked by:** 16 (estimate as boxes)
 
-**Status:** todo
+**Status:** done
 
 - [ ] A Task with many Pomodoros, each with several Marks, shows every Pomodoro and Mark without clipping or squashing.
 - [ ] The popover never gets wider than its fixed width.

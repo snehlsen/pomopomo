@@ -11,7 +11,7 @@ struct PomodoroHistory: View {
     let isPast: Bool
 
     var body: some View {
-        HStack(spacing: 5) {
+        FlowLayout(spacing: 5) {
             ForEach(items) { item in
                 switch item {
                 case .pomodoro(let pomodoro):
