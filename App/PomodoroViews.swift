@@ -139,7 +139,9 @@ struct PomodoroStateSymbol: View {
                         .font(.system(size: 8, weight: .bold))
                         .foregroundStyle(.white)
                 }
-        case .running: symbol("circle.dotted")
+        case .running:
+            // In the colour of the countdown, so the Pomodoro under way stands out in its row.
+            Image(systemName: "play.circle.fill").foregroundStyle(Color.accentColor)
         case .paused: symbol("pause.circle")
         case .pausedForGood: symbol("pause.circle.fill")
         case .voided: symbol("xmark.circle")

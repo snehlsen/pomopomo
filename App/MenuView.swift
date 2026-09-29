@@ -225,7 +225,9 @@ struct TaskRow: View {
                     HStack(spacing: 6) {
                         PomodoroHistory(pomodoros: day.pomodoros(on: task.id), estimate: task.estimate, isPast: isPast)
                         if !isPast && !day.hasStartedPomodoro(on: task.id) && !task.isDone {
+                            // Next to the boxes it adds and removes, so it needs no word of its own.
                             Stepper("Estimate", value: estimate, in: 1...20)
+                                .labelsHidden()
                                 .controlSize(.mini)
                                 .help("Change the Estimate. It locks when the first Pomodoro starts.")
                                 .accessibilityLabel("Estimate")
@@ -246,7 +248,7 @@ struct TaskRow: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 if task.isDone {
                     // Neutral, so Done (for Tasks) never looks like Completed (green, for Pomodoros).
-                    Label("Done", systemImage: "seal")
+                    Label("Done", systemImage: "flag.checkered")
                         .labelStyle(.titleAndIcon)
                         .font(.caption)
                         .foregroundStyle(.secondary)
@@ -422,19 +424,29 @@ struct AddTaskView: View {
                     .focused(focused)
                     .onSubmit(add)
                     .help("New Task (⌘N)")
-                Stepper("Estimate \(estimate)", value: $estimate, in: 1...20)
-                    .fixedSize()
-                    .help("Estimate: how many Pomodoros you expect it to take")
-                    .accessibilityLabel("Estimate")
-                    .accessibilityValue("\(estimate) Pomodoros")
                 Button("Add", action: add)
                     .disabled(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             }
+            // The Estimate as the boxes the new row will show, so it reads the same before and after adding.
+            HStack(spacing: 6) {
+                Text("Estimate")
+                PomodoroHistory(pomodoros: [], estimate: estimate, isPast: false)
+                    .fixedSize()
+                    .accessibilityHidden(true)
+                Stepper("Estimate", value: $estimate, in: 1...20)
+                    .labelsHidden()
+                    .controlSize(.mini)
+                    .accessibilityValue("\(estimate) Pomodoros")
+            }
+            .font(.caption)
+            .foregroundStyle(.secondary)
+            .help("Estimate: how many Pomodoros you expect it to take")
             ErrorText(model: model, place: .addTask)
             SplitHint(estimate: estimate)
             Text("The Estimate and name lock when the Task's first Pomodoro starts.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
         }
     }
 
