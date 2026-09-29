@@ -4,7 +4,7 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** todo
+**Status:** done
 
 - [ ] Space pauses and resumes the Pomodoro when the New Task field isn't focused.
 - [ ] ⌘N focuses the New Task field.

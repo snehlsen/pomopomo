@@ -6,6 +6,7 @@ struct MenuView: View {
     let model: AppModel
     @Environment(\.openSettings) private var openSettings
     @State private var showsLegend = false
+    @FocusState private var newTaskFocused: Bool
 
     /// Keeps the popover on screen with many Tasks; the timer card, Add Task and the footer stay visible.
     private static let taskListMaxHeight: CGFloat = 380
@@ -35,13 +36,55 @@ struct MenuView: View {
                 CappedScrollView(maxHeight: Self.taskListMaxHeight) {
                     TaskListView(model: model, day: model.today, isPast: false)
                 }
-                AddTaskView(model: model)
+                AddTaskView(model: model, focused: $newTaskFocused)
             }
             Divider()
             footer
         }
         .padding()
         .frame(width: 340)
+        .background(KeyMonitor(handler: handleKey))
+    }
+
+    /// Space pauses and resumes, ← and → move between Days, ⌘N starts a new Task and ⌘T goes back to today.
+    /// Keys without ⌘ are left alone while a text field is being edited.
+    private func handleKey(_ event: NSEvent) -> Bool {
+        let modifiers = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
+            .subtracting([.numericPad, .function, .capsLock])
+        if modifiers == .command {
+            switch event.charactersIgnoringModifiers {
+            case "n":
+                model.browsedDate = nil
+                // The field only exists on today, which may appear with this same update.
+                DispatchQueue.main.async { newTaskFocused = true }
+                return true
+            case "t":
+                model.browsedDate = nil
+                return true
+            default:
+                return false
+            }
+        }
+        guard modifiers.isEmpty, !(event.window?.firstResponder is NSText) else { return false }
+        switch event.specialKey {
+        case .leftArrow?:
+            model.browse(by: -1)
+            return true
+        case .rightArrow?:
+            model.browse(by: 1)
+            return true
+        default:
+            guard event.charactersIgnoringModifiers == " ", !model.isShowingPastDay,
+                  let pomodoro = model.activePomodoro else { return false }
+            model.perform(at: .pomodoro) { logbook, now in
+                if pomodoro.isPaused {
+                    try logbook.resumePomodoro(now: now)
+                } else {
+                    try logbook.pausePomodoro(now: now)
+                }
+            }
+            return true
+        }
     }
 
     private var footer: some View {
@@ -104,17 +147,18 @@ struct MenuView: View {
         HStack {
             Button { model.browse(by: -1) } label: { Image(systemName: "chevron.left") }
                 .disabled(!model.canBrowseBack)
-                .help("Previous Day")
+                .help("Previous Day (←)")
                 .accessibilityLabel("Previous Day")
             Text(model.shownDay.date.start(in: model.logbook.calendar), format: .dateTime.weekday(.wide).day().month(.wide))
                 .font(.headline)
             Button { model.browse(by: 1) } label: { Image(systemName: "chevron.right") }
                 .disabled(!model.isShowingPastDay)
-                .help("Next Day")
+                .help("Next Day (→)")
                 .accessibilityLabel("Next Day")
             Spacer()
             if model.isShowingPastDay {
                 Button("Today") { model.browsedDate = nil }
+                    .help("Back to today (⌘T)")
             }
         }
         .buttonStyle(.borderless)
@@ -367,6 +411,7 @@ struct TaskRow: View {
 
 struct AddTaskView: View {
     let model: AppModel
+    var focused: FocusState<Bool>.Binding
     @State private var name = ""
     @State private var estimate = 1
 
@@ -374,7 +419,9 @@ struct AddTaskView: View {
         VStack(alignment: .leading, spacing: 4) {
             HStack {
                 TextField("New Task", text: $name)
+                    .focused(focused)
                     .onSubmit(add)
+                    .help("New Task (⌘N)")
                 Stepper("Estimate \(estimate)", value: $estimate, in: 1...20)
                     .fixedSize()
                     .help("Estimate: how many Pomodoros you expect it to take")

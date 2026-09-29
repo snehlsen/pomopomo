@@ -89,10 +89,12 @@ struct ActivePomodoroView: View {
                             model.perform(at: .pomodoro) { logbook, now in try logbook.resumePomodoro(now: now) }
                         }
                         .keyboardShortcut(.defaultAction)
+                        .help("Resume (Space or Return)")
                     } else {
                         Button("Pause") {
                             model.perform(at: .pomodoro) { logbook, now in try logbook.pausePomodoro(now: now) }
                         }
+                        .help("Pause (Space)")
                     }
                     Spacer().frame(width: 16)
                     Button("Void…") { confirmingVoid = true }
