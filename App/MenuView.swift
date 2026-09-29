@@ -170,14 +170,21 @@ struct TaskRow: View {
     let task: PomopomoCore.Task
     let isPast: Bool
     @State private var confirmingDone = false
+    @State private var draftName: String?
+    @FocusState private var nameFieldFocused: Bool
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(alignment: .firstTextBaseline) {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(task.name)
-                        .strikethrough(task.isDone)
-                        .foregroundStyle(task.isDone ? .secondary : .primary)
+                    if draftName != nil {
+                        nameField
+                    } else {
+                        Text(task.name)
+                            .strikethrough(task.isDone)
+                            .foregroundStyle(task.isDone ? .secondary : .primary)
+                            .onTapGesture(count: 2) { if canRename { startRenaming() } }
+                    }
                     HStack(spacing: 4) {
                         Text("\(day.completedCount(of: task.id)) of \(task.estimate) Pomodoros")
                         if !isPast && !day.hasStartedPomodoro(on: task.id) && !task.isDone {
@@ -213,6 +220,36 @@ struct TaskRow: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
+    /// Like the Estimate, the name can change until the first Pomodoro on the Task starts.
+    private var canRename: Bool {
+        !isPast && !task.isDone && !day.hasStartedPomodoro(on: task.id)
+    }
+
+    private var nameField: some View {
+        TextField("Task name", text: Binding(get: { draftName ?? "" }, set: { draftName = $0 }))
+            .textFieldStyle(.roundedBorder)
+            .focused($nameFieldFocused)
+            .onSubmit(finishRenaming)
+            .onExitCommand { draftName = nil }
+            // Focus once the field is on screen; the ⋯ menu may still be closing.
+            .onAppear { DispatchQueue.main.async { nameFieldFocused = true } }
+            .onChange(of: nameFieldFocused) { _, focused in
+                if !focused { finishRenaming() }
+            }
+    }
+
+    private func startRenaming() {
+        draftName = task.name
+    }
+
+    /// Saves the new name, unless it's empty after trimming: then the old name stays.
+    private func finishRenaming() {
+        guard let name = draftName else { return }
+        draftName = nil
+        guard !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty, name != task.name else { return }
+        model.perform { logbook, now in try logbook.renameTask(task.id, to: name, now: now) }
+    }
+
     /// Whether this Task's Pomodoro is Running or Paused, which rules out marking it Done.
     private var hasActivePomodoro: Bool {
         model.activePomodoro?.taskID == task.id
@@ -226,6 +263,9 @@ struct TaskRow: View {
                 Text("Finish or Void its Pomodoro first")
             } else {
                 Button("Mark Done…") { confirmingDone = true }
+            }
+            if canRename {
+                Button("Rename…", action: startRenaming)
             }
             if !day.hasStartedPomodoro(on: task.id) {
                 Button("Delete Task", role: .destructive) {

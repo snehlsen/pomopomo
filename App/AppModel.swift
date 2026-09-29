@@ -167,6 +167,8 @@ extension PomopomoError {
     var message: String {
         switch self {
         case .invalidEstimate: "An Estimate must be at least 1 Pomodoro."
+        case .invalidName: "A Task needs a name."
+        case .nameLocked: "A Task can't be renamed once a Pomodoro on it has started."
         case .noSuchTask: "That Task isn't on today's list."
         case .pomodoroAlreadyRunning: "A Pomodoro is already Running."
         case .noRunningPomodoro: "No Pomodoro is Running."

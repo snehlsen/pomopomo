@@ -2,6 +2,8 @@ import Foundation
 
 public enum PomopomoError: Error, Equatable {
     case invalidEstimate
+    case invalidName
+    case nameLocked
     case noSuchTask
     case pomodoroAlreadyRunning
     case noRunningPomodoro
@@ -112,6 +114,17 @@ public struct Logbook: Codable, Equatable, Sendable {
         try updateTask(taskID, now: now) { task in
             guard !locked else { throw PomopomoError.estimateLocked }
             task.estimate = estimate
+        }
+    }
+
+    /// Renames a Task, which is only allowed until the first Pomodoro on it starts, like changing its Estimate.
+    public mutating func renameTask(_ taskID: Task.ID, to name: String, now: Date) throws {
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { throw PomopomoError.invalidName }
+        let locked = today(now: now).hasStartedPomodoro(on: taskID)
+        try updateTask(taskID, now: now) { task in
+            guard !locked else { throw PomopomoError.nameLocked }
+            task.name = trimmed
         }
     }
 

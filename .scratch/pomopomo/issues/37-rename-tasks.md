@@ -4,7 +4,7 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** todo
+**Status:** done
 
 - [ ] A Task can be renamed from its ⋯ menu or by double-clicking its name, until its first Pomodoro starts.
 - [ ] A name that is empty after trimming is refused.
