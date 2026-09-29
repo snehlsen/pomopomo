@@ -12,6 +12,7 @@ struct MenuView: View {
             if model.isShowingPastDay {
                 TaskListView(model: model, day: model.shownDay, isPast: true)
             } else {
+                SetProgressView(progress: model.setProgress)
                 if let pomodoro = model.activePomodoro {
                     ActivePomodoroView(model: model, pomodoro: pomodoro)
                 }
@@ -187,7 +188,7 @@ struct TaskRow: View {
                     .foregroundStyle(.secondary)
                     PomodoroHistory(pomodoros: day.pomodoros(on: task.id), isPast: isPast)
                 }
-                Spacer()
+                .frame(maxWidth: .infinity, alignment: .leading)
                 if task.isDone {
                     Label("Done", systemImage: "checkmark.seal.fill")
                         .labelStyle(.titleAndIcon)
@@ -206,6 +207,7 @@ struct TaskRow: View {
                 doneConfirmation
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     /// Whether this Task's Pomodoro is Running or Paused, which rules out marking it Done.

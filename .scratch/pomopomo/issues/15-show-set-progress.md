@@ -4,7 +4,7 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** todo
+**Status:** done
 
 - [ ] Today's view shows how many Completed Pomodoros the current Set has, out of the Set size.
 - [ ] Today's view shows how many Pomodoros have been Completed today.

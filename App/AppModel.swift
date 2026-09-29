@@ -58,6 +58,8 @@ final class AppModel {
 
     var runningBreak: Break? { logbook.runningBreak(now: now) }
 
+    var setProgress: SetProgress { logbook.setProgress(now: now) }
+
     var isPomodoroRunning: Bool {
         if case .running = activePomodoro?.state { true } else { false }
     }

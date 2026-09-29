@@ -82,6 +82,18 @@ public struct Logbook: Codable, Equatable, Sendable {
         return running
     }
 
+    /// Today's current Set. A full Set stays current until its Long Break is over or skipped;
+    /// then the next Set begins.
+    public func setProgress(now: Date) -> SetProgress {
+        let total = today(now: now).completedCount
+        let size = settings.setSize
+        let longBreakPending = dueBreak(now: now) == .long || runningBreak(now: now)?.kind == .long
+        if total > 0, total % size == 0, longBreakPending {
+            return SetProgress(number: total / size, completed: size, size: size, completedToday: total)
+        }
+        return SetProgress(number: total / size + 1, completed: total % size, size: size, completedToday: total)
+    }
+
     // MARK: Tasks
 
     @discardableResult
