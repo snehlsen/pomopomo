@@ -37,6 +37,8 @@ The lengths of a Pomodoro, a Short Break and a Long Break, the size of a Set, wh
 
 Everything stays on your Mac, in `~/Library/Application Support/Pomopomo/logbook.json`. There are no accounts and no syncing.
 
+Before the first save each day, Pomopomo copies that file into `Backups/logbook-YYYY-MM-DD.json` next to it and keeps the last 14. To restore one, quit Pomopomo and copy it over `logbook.json`. If Pomopomo can't read `logbook.json`, it moves it to `logbook.unreadable-….json` and says so, rather than overwriting it.
+
 ## Install
 
 Download `Pomopomo-….zip` from the [latest Release](https://github.com/snehlsen/pomopomo/releases/latest), unzip it and drag Pomopomo into Applications. It needs macOS 14 or later and runs on Apple silicon and Intel Macs.

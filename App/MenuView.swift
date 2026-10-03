@@ -14,7 +14,7 @@ struct MenuView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             header
-            if let message = model.saveErrorMessage {
+            if let message = model.loadMessage ?? model.saveErrorMessage {
                 Label(message, systemImage: "exclamationmark.triangle.fill")
                     .font(.caption)
                     .foregroundStyle(.red)

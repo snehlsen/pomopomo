@@ -13,6 +13,8 @@ final class AppModel {
     private(set) var error: PlacedError?
     /// Saving has no single control, so this shows on its own until saving works again.
     private(set) var saveErrorMessage: String?
+    /// What happened to a Logbook that couldn't be read at launch. Shows until the app quits.
+    private(set) var loadMessage: String?
 
     /// Whether a sound plays when a Pomodoro or Break ends. Stored on this Mac.
     var playsSound: Bool {
@@ -25,16 +27,19 @@ final class AppModel {
     }
 
     @ObservationIgnored private let store: LogbookStore
+    /// Off when the stored Logbook couldn't be read or set aside, so saving can't overwrite it.
+    @ObservationIgnored private var savesToStore = true
     @ObservationIgnored private var timer: Timer?
     @ObservationIgnored private var activity: NSObjectProtocol?
     @ObservationIgnored private let notificationHandler = NotificationHandler()
 
     init(store: LogbookStore = .standard) {
         self.store = store
-        logbook = Self.load(from: store)
+        logbook = Logbook()
         playsSound = UserDefaults.standard.object(forKey: "playsSound") as? Bool ?? true
         menuBarDisplay = UserDefaults.standard.string(forKey: "menuBarDisplay")
             .flatMap(MenuBarDisplay.init(rawValue:)) ?? .minutesAndSeconds
+        load()
         // Keep App Nap from delaying the countdown; the Mac may still sleep.
         activity = ProcessInfo.processInfo.beginActivity(
             options: .userInitiatedAllowingIdleSystemSleep,
@@ -159,6 +164,7 @@ final class AppModel {
     }
 
     private func save() {
+        guard savesToStore else { return }
         do {
             try store.save(logbook)
             saveErrorMessage = nil
@@ -238,15 +244,19 @@ final class AppModel {
         post(content)
     }
 
-    /// Loads the stored Logbook. A file that can't be read is moved aside rather than overwritten.
-    private static func load(from store: LogbookStore) -> Logbook {
+    /// Loads the stored Logbook. A file that can't be read is set aside rather than overwritten;
+    /// if even that fails, nothing is saved this session.
+    private func load() {
         do {
-            return try store.load()
-        } catch {
-            let backup = store.fileURL.deletingPathExtension()
-                .appendingPathExtension("unreadable-\(Int(Date().timeIntervalSince1970)).json")
-            try? FileManager.default.moveItem(at: store.fileURL, to: backup)
-            return Logbook()
+            logbook = try store.load()
+        } catch let loadError {
+            do {
+                let setAside = try store.setAsideUnreadableFile()
+                loadMessage = "Couldn't read your Logbook, so it was moved to \(setAside.lastPathComponent) and a new one started."
+            } catch {
+                savesToStore = false
+                loadMessage = "Couldn't read your Logbook (\(loadError.localizedDescription)). Nothing will be saved, so it isn't overwritten."
+            }
         }
     }
 }

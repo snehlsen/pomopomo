@@ -77,7 +77,7 @@ import Testing
     @Test mutating func settingsSurviveRelaunch() throws {
         let directory = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
         try logbook.changeSettings(settings(pomodoro: 30, short: 6, long: 20, setSize: 3))
-        try LogbookStore(directory: directory).save(logbook)
+        try LogbookStore(directory: directory).save(logbook, now: sept28(9))
 
         #expect(try LogbookStore(directory: directory).load(calendar: utc).settings == settings(pomodoro: 30, short: 6, long: 20, setSize: 3))
     }
