@@ -3,7 +3,8 @@ import Testing
 @testable import PomopomoCore
 
 @Suite struct LogbookStoreTests {
-    let directory = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
+    /// Has a space in it, like the real `Application Support`.
+    let directory = FileManager.default.temporaryDirectory.appending(path: "Application Support/\(UUID().uuidString)")
 
     @Test func startsEmptyWhenNothingIsStored() throws {
         let store = LogbookStore(directory: directory)
